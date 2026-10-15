@@ -1,0 +1,56 @@
+@page "/applications/new"
+@page "/applications/{Id:int}/edit"
+@using Scout.Web.Features.Applications
+@using System.ComponentModel.DataAnnotations
+@inject ApplicationOperations Applications
+@inject Scout.Web.Features.Positions.PositionOperations Positions
+<PageTitle>Application · Scout</PageTitle>
+<h1>@(Id.HasValue ? "Edit application" : "Add application")</h1>
+<LoadPanel Load="LoadAsync" LoadKey="@($"{Id}/{PositionId}")">
+    @if (missing) { <p>Application not found. <a href="/applications">Return to applications</a>.</p> }
+    else if (!Id.HasValue && positions.Count == 0) { <p>Add an active position at an active company first. <a href="/positions/new">Add position</a>.</p> }
+    else
+    {
+        <DraftForm Model="model" Save="SaveAsync" CancelUrl="@CancelUrl" SaveLabel="Save application" FormName="ApplicationEditor">
+            @if (Id.HasValue) { <p>Position: <a href="@($"/positions/{model.PositionId}")">@positionTitle</a>. Application history stays with this position.</p> }
+            else { <div class="field"><label for="position">Position (required)</label><InputSelect id="position" @bind-Value="model.PositionId" @bind-Value:after="LoadAttemptsAsync"><option value="0">Choose a position</option>@foreach (var p in positions) { <option value="@p.Id">@p.CompanyName · @p.Title</option> }</InputSelect><ValidationMessage For="() => model.PositionId" /></div> }
+            @if (attempts.Count > 0) { <div class="message"><p>Existing attempts for this position:</p><ul>@foreach (var a in attempts) { <li><a href="@($"/applications/{a.Id}")">@(a.AttemptLabel ?? $"Attempt #{a.Id}")</a> · @a.Status @(a.IsArchived ? "(archived)" : "")</li> }</ul><p>You can create a separate attempt if intended.</p></div> }
+            <div class="field"><label for="label">Attempt label</label><InputText id="label" @bind-Value="model.AttemptLabel" maxlength="200" /></div>
+            <div class="field"><label for="status">Application status</label><InputSelect id="status" @bind-Value="model.Status">@foreach (var s in Enum.GetValues<ApplicationStatus>()) { <option value="@s">@s</option> }</InputSelect></div>
+            <div class="field"><label for="applied">Date applied (if known)</label><InputDate id="applied" @bind-Value="model.AppliedOn" /></div>
+            <div class="field"><label for="outcome">Outcome date (if known)</label><InputDate id="outcome" @bind-Value="model.OutcomeOn" /></div>
+            <div class="field"><label for="outcome-notes">Outcome notes</label><InputTextArea id="outcome-notes" @bind-Value="model.OutcomeNotes" maxlength="100000" /></div>
+            <div class="field"><label for="notes">Application notes</label><InputTextArea id="notes" @bind-Value="model.Notes" maxlength="100000" /></div>
+        </DraftForm>
+    }
+</LoadPanel>
+@code {
+    [Parameter] public int? Id { get; set; }
+    [SupplyParameterFromQuery] public int? PositionId { get; set; }
+    [SupplyParameterFromQuery] public string? ListQuery { get; set; }
+    private ApplicationEditModel model = new();
+    private IReadOnlyList<Scout.Web.Features.Positions.PositionListItem> positions = [];
+    private IReadOnlyList<ApplicationListItem> attempts = [];
+    private bool missing;
+    private string? positionTitle;
+    private string CancelUrl => Id.HasValue ? CatalogLinks.Record($"/applications/{Id}", ListQuery) : CatalogLinks.List("/applications", ListQuery);
+    private async Task LoadAsync()
+    {
+        missing = false; attempts = [];
+        if (Id.HasValue)
+        {
+            var a = await Applications.GetAsync(Id.Value); missing = a is null;
+            if (a is not null) { positionTitle = a.Position.Title; model = new() { PositionId = a.PositionId, AttemptLabel = a.AttemptLabel, Status = a.Status, AppliedOn = a.AppliedOn, OutcomeOn = a.OutcomeOn, OutcomeNotes = a.OutcomeNotes, Notes = a.Notes }; }
+        }
+        else { model = new() { PositionId = PositionId ?? 0 }; positions = (await Positions.ListAsync()).Where(p => !p.CompanyIsArchived).ToList(); await LoadAttemptsAsync(); }
+    }
+    private async Task LoadAttemptsAsync() => attempts = await Applications.ListAsync(model.PositionId, archive: ArchiveFilter.All);
+    private async Task<string> SaveAsync()
+    {
+        var id = Id;
+        if (id.HasValue) { if (!await Applications.UpdateAsync(id.Value, model)) throw new ValidationException("Application no longer exists. Your draft is retained."); }
+        else id = await Applications.CreateAsync(model);
+        return CatalogLinks.Record($"/applications/{id}", ListQuery);
+    }
+}
+

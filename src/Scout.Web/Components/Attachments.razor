@@ -1,0 +1,14 @@
+@using Scout.Web.Features.Documents
+@using System.ComponentModel.DataAnnotations
+@inject DocumentOperations Documents
+<section class="card details-card company-section"><h2>Documents</h2><p><a href="@($"/documents/import?ownerKind={Kind}&ownerId={OwnerId}")">Import and attach file</a></p>@if(linked.Count==0){<p>No attachments yet.</p>}@foreach(var d in linked){<div class="attachment"><p><a href="@($"/documents/{d.Id}")">@d.OriginalName</a> @(d.IsArchived?"(archived)":"") · <a href="@($"/documents/{d.Id}/download")" data-enhance-nav="false">Download</a></p><OperationButton Label="@($"Remove link to {d.OriginalName}")" Save="@(()=>Documents.UnlinkAsync(Owner,d.Id))" OnChanged="LoadAsync" /></div>}
+<DraftForm Model="@draft" Save="LinkAsync" CancelUrl="@ReturnUrl" SaveLabel="Attach existing document" FormName="@PickerId"><div class="field"><label for="@PickerId">Existing active document</label><InputSelect id="@PickerId" @bind-Value="draft.DocumentId"><option value="0">Choose a document</option>@foreach(var d in options){<option value="@d.Id">@d.OriginalName · #@d.Id</option>}</InputSelect></div></DraftForm><p>Removing a link preserves the file and every other association.</p></section>
+@code{
+    [Parameter]public DocumentOwnerKind Kind{get;set;}[Parameter]public int OwnerId{get;set;}[Parameter]public string ReturnUrl{get;set;}="/documents";private DocumentOwner Owner=>new(Kind,OwnerId);private string PickerId=>$"attachment-{Kind}-{OwnerId}";
+    private sealed class Selection{[Range(1,int.MaxValue)]public int DocumentId{get;set;}}private Selection draft=new();private IReadOnlyList<DocumentListItem> linked=[],options=[];
+    private DocumentOwner? loadedOwner;
+    protected override async Task OnParametersSetAsync(){if(loadedOwner==Owner)return;await LoadAsync();loadedOwner=Owner;}private async Task LoadAsync(){linked=await Documents.LinkedAsync(Owner);options=(await Documents.ListAsync()).Where(d=>!linked.Any(l=>l.Id==d.Id)).ToList();draft=new();}
+    private async Task<string> LinkAsync(){await Documents.LinkAsync(Owner,draft.DocumentId);await LoadAsync();StateHasChanged();return ReturnUrl;}
+}
+
+

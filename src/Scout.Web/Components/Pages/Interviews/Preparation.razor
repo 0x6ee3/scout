@@ -1,0 +1,72 @@
+<p><a class="button" href="@($"/interviews/{Id}/workspace/setup")">Start Interview Workspace</a></p>
+@page "/interviews/{Id:int}/preparation"
+@using Scout.Web.Features.Interviews
+@using Scout.Web.Features.Questions
+@using Scout.Web.Features.InterviewPreparation
+@inject InterviewOperations Interviews
+@inject QuestionOperations QuestionLibrary
+@inject PreparationOperations PreparationOperations
+@inject Scout.Web.Features.Companies.CompanyOperations Companies
+@inject Scout.Web.Features.Experiences.ExperienceOperations ExperienceLibrary
+<PageTitle>Interview preparation · Scout</PageTitle>
+<div class="preparation-page">
+<LoadPanel Load="LoadAsync" LoadKey="@Id.ToString()">
+@if(round is null) { <h1>Interview not found</h1> } else {
+<a href="@($"/interviews/{Id}")">← Interview</a><h1>Prepare: @round.Title</h1><p>@companyName · @round.Application.Position.Title · Application @round.ApplicationId · @round.Status @(round.IsArchived ? "· Archived" : "")</p>
+<p class="message">Private preparation page. Save changes explicitly. This is not the screen-shareable Interview Workspace.</p>
+<h2>Questions to ask</h2>
+@if(!round.IsArchived) { <PreparationPicker Choices="choices" AlreadySelected="selectedSources" ReturnUrl="@Back" OnSave="AddQuestions" /> } else { <p>Restore the interview before adding or restoring preparation.</p> }
+<label class="checkbox-label"><input type="checkbox" @bind="showRemoved" /> Show removed questions</label>
+@if(!questions.Any(x => x.IsArchived == showRemoved)) { <p>No @(showRemoved ? "removed" : "selected") questions.</p> }
+@foreach(var item in questions.Where(x => x.IsArchived == showRemoved))
+{
+<section class="card" @key="@($"question-{item.Id}")">
+<h3>@item.Text</h3>
+@if(item.EmployerQuestionId.HasValue) { <a href="@($"/questions/{item.EmployerQuestionId}")">Source question</a>@if(item.EmployerQuestion?.IsArchived == true) { <span class="badge">Source archived</span> } } else if(item.Origin == InterviewQuestionOrigin.AdHoc) { <span class="badge">Ad hoc question</span> } else { <span class="badge">Source question deleted</span> }
+<p>Prepared wording is a local copy.</p><dl><dt>Intent</dt><dd class="plain-text">@item.Intent</dd><dt>Suggested follow-ups</dt><dd class="plain-text">@item.FollowUpQuestions</dd><dt>Private preparation notes</dt><dd class="plain-text">@item.PreparationNotes</dd><dt>Answer for this interview</dt><dd class="plain-text">@(item.Answer ?? "Not recorded")</dd></dl>
+<a class="button" href="@($"/interviews/{Id}/questions/{item.Id}/edit")">Edit wording / answer</a>
+@if(!item.IsArchived && !round.IsArchived) { <OperationButton Label="Move question up" Save="@(() => PreparationOperations.MoveQuestionAsync(Id, item.Id, -1))" OnChanged="LoadAsync" /><OperationButton Label="Move question down" Save="@(() => PreparationOperations.MoveQuestionAsync(Id, item.Id, 1))" OnChanged="LoadAsync" /> }
+<OperationButton Label="@(item.IsArchived ? "Restore question selection" : "Remove question from preparation")" Save="@(() => PreparationOperations.ArchiveQuestionAsync(Id, item.Id, !item.IsArchived))" OnChanged="LoadAsync" />
+</section>
+}
+<h2>STAR experiences</h2>
+<p>Library edits update the STAR content here. Rehearsal notes belong only to this interview.</p>
+@if(!round.IsArchived) { <PreparationPicker Label="experiences" Choices="experienceChoices" AlreadySelected="selectedExperiences" ReturnUrl="@Back" OnSave="AddExperiences" /> }
+<label class="checkbox-label"><input type="checkbox" @bind="showRemovedExperiences" /> Show removed experiences</label>
+@if(!experiences.Any(x => x.IsArchived == showRemovedExperiences)) { <p>No @(showRemovedExperiences ? "removed" : "selected") experiences.</p> }
+@foreach(var item in experiences.Where(x => x.IsArchived == showRemovedExperiences))
+{
+<section class="card" @key="@($"experience-{item.Id}")"><h3>@item.ProfessionalExperience.Title</h3><a href="@($"/experiences/{item.ProfessionalExperienceId}")">Source experience</a>
+@if(item.ProfessionalExperience.IsArchived) { <span class="badge">Source archived</span> }
+<TagBadges Values="item.ProfessionalExperience.Tags.Select(x => x.Tag)" /><ExperienceStory Experience="item.ProfessionalExperience" />
+<h4>Private rehearsal notes for this interview</h4><p class="plain-text">@(item.PreparationNotes ?? "Not added")</p>
+<a class="button" href="@($"/interviews/{Id}/experiences/{item.Id}/edit")">Edit rehearsal notes</a>
+@if(!item.IsArchived && !round.IsArchived) { <OperationButton Label="Move experience up" Save="@(() => PreparationOperations.MoveExperienceAsync(Id, item.Id, -1))" OnChanged="LoadAsync" /><OperationButton Label="Move experience down" Save="@(() => PreparationOperations.MoveExperienceAsync(Id, item.Id, 1))" OnChanged="LoadAsync" /> }
+<OperationButton Label="@(item.IsArchived ? "Restore experience selection" : "Remove experience from preparation")" Save="@(() => PreparationOperations.ArchiveExperienceAsync(Id, item.Id, !item.IsArchived))" OnChanged="LoadAsync" />
+</section>
+}
+}
+</LoadPanel>
+</div>
+@code {
+    [Parameter] public int Id { get; set; }
+    private InterviewRound? round; private bool showRemoved;
+    private string? companyName;
+    private IReadOnlyList<InterviewQuestion> questions = [];
+    private IReadOnlyList<PreparationChoice> choices = [];
+    private IReadOnlySet<int> selectedSources = new HashSet<int>();
+    private IReadOnlyList<InterviewExperience> experiences = [];
+    private IReadOnlyList<PreparationChoice> experienceChoices = [];
+    private IReadOnlySet<int> selectedExperiences = new HashSet<int>();
+    private bool showRemovedExperiences;
+    private string Back => $"/interviews/{Id}/preparation";
+    private async Task LoadAsync() {
+        round = await Interviews.GetAsync(Id);
+        if(round is not null) companyName = (await Companies.GetAsync(round.Application.Position.CompanyId))?.Name;
+        if(round is not null) { questions = await PreparationOperations.QuestionsAsync(Id); choices = (await QuestionLibrary.ListAsync()).Select(x => new PreparationChoice(x.Id, x.Text, x.Tags, [x.Text])).ToList(); selectedSources = questions.Where(x => !x.IsArchived && x.EmployerQuestionId.HasValue).Select(x => x.EmployerQuestionId!.Value).ToHashSet(); }
+        if(round is not null) { experiences = await PreparationOperations.ExperiencesAsync(Id); experienceChoices = (await ExperienceLibrary.ListAsync()).Select(x => new PreparationChoice(x.Id, x.Title + " · " + x.MemoryCue, x.Tags, [x.Title, x.MemoryCue])).ToList(); selectedExperiences = experiences.Where(x => !x.IsArchived).Select(x => x.ProfessionalExperienceId).ToHashSet(); }
+        StateHasChanged();
+    }
+    private async Task AddQuestions(int[] ids) { await PreparationOperations.SelectQuestionsAsync(Id, ids); await LoadAsync(); }
+    private async Task AddExperiences(int[] ids) { await PreparationOperations.SelectExperiencesAsync(Id, ids); await LoadAsync(); }
+}

@@ -1,0 +1,21 @@
+@using Scout.Web.Features.InterviewPreparation
+<DraftForm Model="@selection" Save="SaveAsync" CancelUrl="@ReturnUrl" SaveLabel="@($"Add selected {Label}")" FormName="@formId">
+<h3>Select @Label</h3>
+<div class="field"><label for="@(formId + "-search")">Search available @Label</label><input id="@(formId + "-search")" @bind="search" @bind:event="oninput" /></div>
+<div class="field"><label for="@(formId + "-tag")">Filter @Label by tag</label><select id="@(formId + "-tag")" @bind="tag"><option value="">All tags</option>@foreach(var value in Choices.SelectMany(x => x.Tags).Distinct().Order()) { <option value="@value">@value</option> }</select></div>
+@if(!Filtered.Any()) { <p>No available @Label match this view. Add entries in the catalog or reset these filters.</p> }
+<PreparationOptions Choices="Filtered" AlreadySelected="AlreadySelected" Model="selection" />
+@if(saved) { <p role="status">Selection saved.</p> }
+</DraftForm>
+@code {
+    [Parameter] public string Label { get; set; } = "questions";
+    [Parameter] public string ReturnUrl { get; set; } = "/applications";
+    [Parameter] public IReadOnlyList<PreparationChoice> Choices { get; set; } = [];
+    [Parameter] public IReadOnlySet<int> AlreadySelected { get; set; } = new HashSet<int>();
+    [Parameter] public EventCallback<int[]> OnSave { get; set; }
+    private readonly string formId = $"selection-{Guid.NewGuid():N}";
+    private PreparationSelectionModel selection = new();
+    private string search = "", tag = ""; private bool saved;
+    private IEnumerable<PreparationChoice> Filtered => Choices.Where(x => (tag == "" || x.Tags.Contains(tag)) && (string.IsNullOrWhiteSpace(search) || x.SearchFields.Concat(x.Tags).Any(v => v?.Contains(search.Trim(), StringComparison.OrdinalIgnoreCase) == true)));
+    private async Task<string> SaveAsync() { if(selection.SelectedIds.Count == 0) throw new System.ComponentModel.DataAnnotations.ValidationException("Select at least one entry to add."); await OnSave.InvokeAsync(selection.SelectedIds.ToArray()); selection = new(); saved = true; StateHasChanged(); return ""; }
+}

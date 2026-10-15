@@ -1,0 +1,18 @@
+@page "/error"
+@using System.Diagnostics
+
+<PageTitle>Something went wrong · Scout</PageTitle>
+<h1>Something went wrong</h1>
+<p>Scout could not complete the request. Return to the company list and try again.</p>
+<p>Check the Scout terminal for details if the problem continues.</p>
+@if (requestId is not null)
+{
+    <p class="muted">Request reference: @requestId</p>
+}
+<a href="/companies">Back to companies</a>
+
+@code {
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+    private string? requestId;
+    protected override void OnInitialized() => requestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+}

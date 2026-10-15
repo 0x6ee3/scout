@@ -479,7 +479,8 @@ Suggested panels:
 4. Questions to ask the employer.
 5. Expected questions and professional experiences.
 6. Notes.
-7. Recording status and controls.
+
+Milestone 4 provides the Workspace without audio setup or consent prompts. Recording status/controls, consent decisions, and audio import/linking are deferred to Milestone 5. Existing generic opaque audio attachments remain available without adding a recording workflow.
 
 Start with a simple CSS grid layout. Drag-and-drop panel arrangement is optional and can be deferred.
 
@@ -564,6 +565,10 @@ Ensure note changes are protected against accidental browser refresh or navigati
 
 ## 6. Audio recording and consent
 
+**Milestone 5 scope:** the initial audio workflow, all recording-consent functionality, recording metadata, external-audio import/linking, and related storage, size-limit and failure-handling work are deferred from Milestone 4. M4 adds no audio/consent UI, entities, migrations or placeholder services. Native capture remains a separate future improvement, as described in section 6.3 and Milestone 6.
+
+Audio-specific limits, working-directory linking rules, consent persistence and retry behavior must be settled when planning M5; the current generic document limit is unchanged in M4.
+
 Audio is optional, not required for an interview round.
 
 ### 6.1 Consent model
@@ -572,11 +577,11 @@ Consent is obtained outside Scout.
 
 Scout must never attempt to infer consent or start recording automatically.
 
-The Workspace offers two explicit actions:
+Starting in Milestone 5, the audio workflow offers two explicit actions:
 
-**Consent received — Start recording**
+**Consent received — use external recorder**
 
-The user confirms that consent has been obtained from all participants. Recording may begin only after an explicit user action and only if a recorder integration is available and configured.
+The user confirms that consent has been obtained from all participants, then operates the external recorder separately. Scout records the acknowledgment without claiming capture has started. A future integrated recorder may start only after an explicit user action and only if that integration is available and configured.
 
 **Continue without recording**
 
@@ -594,7 +599,7 @@ Permission to record and permission to transfer data to an external processing s
 
 The user has already demonstrated that Windows recording software can capture microphone audio and PC playback simultaneously in a simple test.
 
-Initial supported workflow:
+Initial supported workflow (Milestone 5):
 
 1. Obtain recording consent outside Scout.
 2. Record using a suitable external tool.
@@ -811,7 +816,13 @@ The first useful release should support:
 - Search prepared experience examples.
 - Take and save notes.
 - Support a notes-only interview.
-- Support attaching externally recorded audio afterward.
+
+### Audio and consent (Milestone 5)
+
+- Explicit acknowledgment of externally obtained recording consent.
+- Continue with manual notes without requiring audio.
+- Import externally recorded audio or link a recording from the configured working directory.
+- Preserve original files and handle unavailable sources and import failures.
 
 ### Explicitly not required for initial usability
 
@@ -892,18 +903,22 @@ Deliverables:
 - Prepared professional experiences.
 - Mark-as-asked and notes functionality.
 - Reliable note saving.
-- Recording-consent workflow.
-- Notes-only workflow.
-- External audio import.
+- Manual-note interview workflow without audio setup or consent prompts.
+
+All audio and recording-consent work is deferred to Milestone 5; M4 introduces no recording UI, metadata, storage or audio-specific limit changes.
 
 Acceptance: The user can conduct a mock interview with Scout on one display, record answers and notes, and safely share the Workspace without revealing unrelated Scout records.
 
-### Milestone 5 — Transcription and structured analysis
+### Milestone 5 — Audio, consent, transcription and structured analysis
 
-Goal: Turn recorded or manually written interviews into reusable knowledge.
+Goal: Add optional consent-aware external-audio workflows and turn recorded or manually written interviews into reusable knowledge.
 
 Deliverables:
 
+- Recording-consent acknowledgment and decision history.
+- Explicit choice to continue without recording; notes and interview completion remain independent of audio.
+- External-audio import/registration and links from the configured working directory.
+- Recording metadata, file preservation, audio size-limit policy, safe file access and import/link failure handling.
 - Optional local audio transcription.
 - Text transcript import.
 - Processing status and errors.
@@ -912,7 +927,7 @@ Deliverables:
 - Review of extracted questions, facts, and actions.
 - Controlled transfer of approved facts into structured data.
 
-Acceptance: The user can import an interview recording or notes, obtain a summary when an analysis provider is configured, and review extracted information before saving it.
+Acceptance: The user can acknowledge externally obtained consent and import/link a recording, or continue with manual notes alone; obtain a summary when an analysis provider is configured; and review extracted information before saving it.
 
 ### Milestone 6 — Future improvements
 

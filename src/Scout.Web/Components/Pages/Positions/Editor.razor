@@ -1,0 +1,133 @@
+@page "/positions/new"
+@page "/positions/{Id:int}/edit"
+@using System.ComponentModel.DataAnnotations
+@using Scout.Web.Features.Positions
+@inject PositionOperations Positions
+@inject NavigationManager Navigation
+@inject ILogger<Editor> Logger
+
+<PageTitle>@(Id.HasValue ? "Edit position" : "Add position") · Scout</PageTitle>
+<a class="back-link" href="@CancelUrl">← @(Id.HasValue ? "Position details" : "Positions")</a>
+@if (loading) { <h1>Position</h1><p role="status">Loading position…</p> }
+else if (failed)
+{
+    <h1>Position unavailable</h1><div class="message error" role="alert">The position could not be loaded. Saved data has not been changed.</div><button @onclick="LoadAsync">Try again</button>
+}
+else if (notFound) { <h1>Position not found</h1><p><a href="/positions">Return to positions</a> to find an existing record.</p> }
+else if (companies.Count == 0)
+{
+    <h1>Add position</h1><p>Add an active company first, then return here to create its position.</p><a class="button" href="/companies/new">Add company</a>
+}
+else
+{
+    <div class="page-heading"><div><p class="eyebrow">Opportunity details</p><h1>@(Id.HasValue ? "Edit position" : "Add position")</h1><p class="muted">Only a company and title are required.</p></div></div>
+    <section class="card form-card">
+        <EditForm EditContext="editContext" OnValidSubmit="SaveAsync" FormName="PositionEditor">
+            <DataAnnotationsValidator /><ValidationSummary />
+            @if (error is not null) { <div class="message error" role="alert">@error</div> }
+            <fieldset disabled="@saving">
+                <legend class="visually-hidden">Position information</legend>
+                <div class="field"><label for="position-company">Company (required)</label>
+                    <InputSelect id="position-company" @bind-Value="model.CompanyId"><option value="0">Choose a company</option>
+                        @foreach (var company in companies) { <option value="@company.Id">@company.Name@(company.IsArchived ? " (archived)" : "")</option> }
+                    </InputSelect><ValidationMessage For="() => model.CompanyId" />
+                </div>
+                <div class="field"><label for="position-title">Position title (required)</label><InputText id="position-title" @bind-Value="model.Title" maxlength="200" /><ValidationMessage For="() => model.Title" /></div>
+                <div class="field"><label for="position-status">Opportunity status</label><InputSelect id="position-status" @bind-Value="model.Status">@foreach (var status in Enum.GetValues<PositionStatus>()) { <option value="@status">@status.DisplayName()</option> }</InputSelect><ValidationMessage For="() => model.Status" /></div>
+                <div class="field"><label for="position-discovered">Discovery date</label><InputDate id="position-discovered" @bind-Value="model.DiscoveredOn" /><ValidationMessage For="() => model.DiscoveredOn" /></div>
+                <div class="field"><label for="position-closing">Closing date</label><InputDate id="position-closing" @bind-Value="model.ClosingOn" /><ValidationMessage For="() => model.ClosingOn" /></div>
+                <div class="field"><label for="position-url">Original vacancy URL</label><InputText id="position-url" @bind-Value="model.OriginalVacancyUrl" maxlength="2048" inputmode="url" aria-describedby="vacancy-url-hint" /><p class="field-hint" id="vacancy-url-hint">A complete HTTP/HTTPS address. Scout does not fetch or scrape it.</p><ValidationMessage For="() => model.OriginalVacancyUrl" /></div>
+                <div class="field"><label for="position-location">Location</label><InputText id="position-location" @bind-Value="model.Location" maxlength="300" /><ValidationMessage For="() => model.Location" /></div>
+                <div class="field"><label for="position-employment">Employment type</label><InputText id="position-employment" @bind-Value="model.EmploymentType" maxlength="100" /><ValidationMessage For="() => model.EmploymentType" /></div>
+                @if (originalSnapshot is not null)
+                {
+                    <div class="field"><h2>Original vacancy description</h2><p class="field-hint">Preserved as originally saved. Put corrections in personal notes.</p><p class="plain-text preserved-text">@originalSnapshot</p></div>
+                }
+                else
+                {
+                    <div class="field"><label for="position-description">Original vacancy description</label><InputTextArea id="position-description" @bind-Value="model.JobDescriptionSnapshot" rows="8" maxlength="100000" aria-describedby="snapshot-hint" /><p id="snapshot-hint" class="field-hint">Paste the original text (up to 100,000 characters). Once saved, it stays read-only.</p><ValidationMessage For="() => model.JobDescriptionSnapshot" /></div>
+                }
+                <div class="field"><label for="position-remote">Remote-work notes</label><InputTextArea id="position-remote" @bind-Value="model.RemoteWorkNotes" rows="4" maxlength="100000" /><ValidationMessage For="() => model.RemoteWorkNotes" /></div>
+                <div class="field"><label for="position-notes">Personal notes</label><InputTextArea id="position-notes" @bind-Value="model.PersonalNotes" rows="6" maxlength="100000" /><ValidationMessage For="() => model.PersonalNotes" /></div>
+                <div class="form-actions"><button type="submit" disabled="@saving">@(saving ? "Saving…" : "Save position")</button><a href="@CancelUrl">Cancel</a></div>
+            </fieldset>
+        </EditForm>
+    </section>
+    <NavigationLock ConfirmExternalNavigation="@(saving || editContext.IsModified())" OnBeforeInternalNavigation="BeforeNavigation" />
+    @if (pendingNavigation is not null)
+    {
+        <div class="message" role="alert"><p>You have unsaved position details. Leave without saving?</p><button class="secondary" @onclick="Leave">Leave without saving</button><button @onclick="() => pendingNavigation = null">Keep editing</button></div>
+    }
+}
+@code {
+    [Parameter] public int? Id { get; set; }
+    [SupplyParameterFromQuery] public string? ListQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "companyId")] public int? CompanyId { get; set; }
+    private PositionEditModel model = new();
+    private EditContext editContext = default!;
+    private IReadOnlyList<CompanyOption> companies = [];
+    private string? originalSnapshot;
+    private bool loading = true, failed, notFound, saving;
+    private string? error, pendingNavigation;
+    private string CancelUrl => Id.HasValue ? CatalogLinks.Record($"/positions/{Id}", ListQuery) : CatalogLinks.List("/positions", ListQuery);
+    protected override Task OnParametersSetAsync() => LoadAsync();
+    private async Task LoadAsync()
+    {
+        loading = true; failed = false; notFound = false; error = null; pendingNavigation = null; originalSnapshot = null;
+        try
+        {
+            model = new PositionEditModel { CompanyId = CompanyId ?? 0 };
+            if (Id.HasValue)
+            {
+                var position = await Positions.GetAsync(Id.Value);
+                notFound = position is null;
+                if (position is not null)
+                {
+                    originalSnapshot = position.JobDescriptionSnapshot;
+                    model = new PositionEditModel
+                    {
+                        CompanyId = position.CompanyId, Title = position.Title, Status = position.Status,
+                        OriginalVacancyUrl = position.OriginalVacancyUrl, Location = position.Location,
+                        JobDescriptionSnapshot = position.JobDescriptionSnapshot, EmploymentType = position.EmploymentType,
+                        RemoteWorkNotes = position.RemoteWorkNotes, PersonalNotes = position.PersonalNotes,
+                        DiscoveredOn = position.DiscoveredOn, ClosingOn = position.ClosingOn
+                    };
+                }
+            }
+            companies = await Positions.CompanyOptionsAsync(Id.HasValue ? model.CompanyId : null);
+            editContext = new EditContext(model);
+        }
+        catch (Exception ex) when (ex is Microsoft.Data.Sqlite.SqliteException or Microsoft.EntityFrameworkCore.DbUpdateException)
+        { Logger.LogError(ex, "Could not load position {PositionId} for editing.", Id); failed = true; }
+        finally { loading = false; }
+    }
+    private async Task SaveAsync()
+    {
+        if (saving) return;
+        saving = true; error = null;
+        try
+        {
+            var id = Id;
+            if (id.HasValue)
+            {
+                if (!await Positions.UpdateAsync(id.Value, model)) { error = "This position no longer exists. Your entered details are still here."; return; }
+            }
+            else { id = await Positions.CreateAsync(model); }
+            editContext.MarkAsUnmodified(); saving = false;
+            Navigation.NavigateTo(CatalogLinks.Record($"/positions/{id}", ListQuery));
+        }
+        catch (ValidationException ex) { error = ex.Message; }
+        catch (Exception ex) when (ex is Microsoft.Data.Sqlite.SqliteException or Microsoft.EntityFrameworkCore.DbUpdateException)
+        { Logger.LogError(ex, "Could not save a position."); error = "The position could not be saved. Your entered details are still here. Check database access and try again."; }
+        finally { saving = false; }
+    }
+    private void BeforeNavigation(LocationChangingContext context)
+    {
+        if (saving) { context.PreventNavigation(); return; }
+        if (editContext.IsModified()) { context.PreventNavigation(); pendingNavigation = context.TargetLocation; }
+    }
+    private void Leave()
+    {
+        var destination = pendingNavigation!; pendingNavigation = null; editContext.MarkAsUnmodified(); Navigation.NavigateTo(destination);
+    }
+}

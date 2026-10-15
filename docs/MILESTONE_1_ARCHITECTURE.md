@@ -1,6 +1,6 @@
 # Scout: Milestone 1 architecture
 
-Status: approved by the user, with a fixed storage root; application implementation has not started.  
+Status: implemented through M1.6 with a fixed storage root; verification recorded in the delivery plan and README.
 Reviewed: 15 October 2026.  
 Specification: [SCOUT_SPEC.md](SCOUT_SPEC.md).  
 Delivery plan: [MILESTONE_1_PLAN.md](MILESTONE_1_PLAN.md).
@@ -9,7 +9,7 @@ Delivery plan: [MILESTONE_1_PLAN.md](MILESTONE_1_PLAN.md).
 
 Build one ASP.NET Core Blazor Web App using Interactive Server rendering, EF Core, and SQLite. Keep the UI, feature operations, entities, and persistence in one application project, with one separate test project. Use ordinary C# classes, built-in forms and validation, and local CSS.
 
-At the initial inspection, the repository contained only `docs/SCOUT_SPEC.md`; the two planning documents have since been added. No application, solution, package configuration, or applicable `AGENTS.md` was found. This directory is not currently a Git repository. Initializing version control can be part of implementation setup.
+At the initial inspection, the repository contained only `docs/SCOUT_SPEC.md`; the two planning documents have since been added. No application, solution, package configuration, or applicable `AGENTS.md` was found. Version control was initialized separately while M1.1 implementation was in progress.
 
 After the user's SDK update, `dotnet --version` reports **10.0.402**. The installed ASP.NET Core and .NET runtimes include **10.0.13**. No SDK installation is outstanding.
 
@@ -74,7 +74,7 @@ Scout/
         PositionStatus.cs
       Data/
         ScoutDbContext.cs
-        DevelopmentSeeder.cs
+        DevelopmentSamples.cs
         Migrations/
       wwwroot/
         app.css
@@ -107,7 +107,7 @@ The asset directory is resolved and created in this milestone; it has no import 
 
 ### UI and feature operations
 
-- Use the standard Blazor Web App template with server interactivity and no authentication. Apply interactivity at the page level, keeping the app shell simple. Keep prerendering disabled on interactive CRUD pages initially to avoid duplicate initialization work.
+- Use the standard Blazor Web App template with server interactivity and no authentication. Apply Interactive Server to `Routes` and `HeadOutlet`, with prerendering disabled initially to avoid duplicate initialization work. Browser testing found that page-level interactivity allowed enhanced navigation to bypass the unsaved-form navigation guard; an interactive router keeps navigation within the circuit so `NavigationLock` can intercept it. Pages inherit the router's render mode.
 - Razor components handle display, edit state, validation messages, and navigation. Concrete `CompanyOperations` and `PositionOperations` classes handle queries, validation of relationships, and saves. Do not introduce an interface for each class.
 - Use `EditForm`, built-in input components, Data Annotations, and explicit feature checks for rules such as selecting an existing company. Validate again at the feature-operation boundary so tests and later callers receive the same rules.
 - Register `AddDbContextFactory<ScoutDbContext>`. Create and dispose a context for each load or save. Never hold a tracked entity or `DbContext` for a whole Blazor circuit. This follows [Microsoft's Blazor EF Core guidance](https://learn.microsoft.com/en-us/aspnet/core/blazor/blazor-ef-core?view=aspnetcore-10.0).
@@ -131,6 +131,10 @@ The asset directory is resolved and created in this milestone; it has no import 
 | `/positions/{id:int}/edit` | Edit position fields and add the initial description if absent. |
 
 Use the same form component within each feature for create/edit where useful. Navigation contains Companies and Positions only. Use readable labels, visible focus, keyboard-accessible controls, a comfortable desktop content width, and simple local CSS. No third-party component library or CDN assets are needed. English interface text and German/English user content are sufficient; a localization framework is unnecessary now.
+
+M1.2 shares a single `Editor.razor` page between the two company form routes. It loads a detached edit model, preserves the draft after validation/database errors, and navigates to details only after a successful save. A small HTTP/HTTPS validation attribute is shared by Data Annotations in the form and the feature operations. The additive `CompanyDetails` migration introduces four nullable text columns and preserves existing company records. No new packages are needed.
+
+M1.3–M1.6 follow the same approach for positions, with one additive `Positions` migration. Shared code is limited to the URL validator, archive enum/control, and catalog query-link helpers used by both features. Catalog search uses ordinary GET forms and query parameters, with a query-only return value carried through detail/edit links. Invalid enum filters fall back to their default view. `DevelopmentSamples` runs after migration at application startup, behind the environment/opt-in/empty-table guards; its explicit transaction covers the emptiness check and one save. No additional dependencies or business tables were introduced.
 
 ## 5. Milestone 1 relational model
 
@@ -221,7 +225,7 @@ Do not move existing data automatically, silently fall back to another database,
 
 ## 7. Stable dependency baseline
 
-Verified against official release/package pages on **15 October 2026**. These are proposed exact pins for implementation; no packages have been added or installed by this task.
+Verified against official release/package pages on **15 October 2026** and restored during M1.1. These are the implementation pins; the remaining slices use the same baseline.
 
 | Dependency | Proposed version | Use / primary source |
 | --- | --- | --- |
@@ -231,15 +235,15 @@ Verified against official release/package pages on **15 October 2026**. These ar
 | `Microsoft.EntityFrameworkCore.Sqlite` | **10.0.13** | Main persistence dependency. [Package](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.Sqlite/10.0.13). |
 | `Microsoft.EntityFrameworkCore.Design` | **10.0.13** | Migration tooling; `PrivateAssets=all`. [Package](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.Design). |
 | `dotnet-ef` | **10.0.13** | Repository-local tool manifest, not a global installation. [Tool](https://www.nuget.org/packages/dotnet-ef). |
-| `xunit.v3` | **4.0.2** | Test project only; the package ID retains `v3` despite its current package version. [Package](https://www.nuget.org/packages/xunit.v3). |
-| `xunit.runner.visualstudio` | **4.0.1** | Test project only; conventional VSTest/VS Code discovery. [Package](https://www.nuget.org/packages/xunit.runner.visualstudio). |
-| `Microsoft.NET.Test.Sdk` | **18.11.0** | Test project only; `dotnet test` through VSTest. [Package](https://www.nuget.org/packages/Microsoft.NET.Test.Sdk). |
+| `xunit.v3` | **4.0.2** | Test project only; the package ID retains `v3` despite its current package version. Supplies Microsoft Testing Platform support transitively. [Package](https://www.nuget.org/packages/xunit.v3). |
 
 .NET 10 is the current stable LTS line, supported through November 2028; .NET 11 is still a prerelease and is not proposed. See the [official support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core). Some indexed pages still show September patches; the October release and exact EF provider page above establish the newer versions.
 
 Keep EF runtime/design/tool packages at the same patch. Use the SQLite native dependencies supplied transitively by the EF SQLite provider; no separate SQLite executable or manually chosen engine package is needed. Pin direct NuGet versions in the two project files; central package management is unnecessary at this size. Recheck stable patch versions when implementation actually begins.
 
-The xUnit [getting-started guide](https://xunit.net/docs/getting-started/v3/getting-started) documents using the adapter and Test SDK for VSTest discovery. No test mocking library, coverage service, EF InMemory provider, bUnit, or Playwright package is required initially. `Microsoft.AspNetCore.Mvc.Testing` is available at [10.0.13](https://www.nuget.org/packages/Microsoft.AspNetCore.Mvc.Testing), but is not an initial dependency: feature tests use real SQLite, and the small interactive UI receives browser smoke checks.
+M1.1 verification found that the package's current Microsoft Testing Platform no longer supports the legacy VSTest entry point with .NET 10. Select `Microsoft.Testing.Platform` in `global.json` and run `dotnet test --solution Scout.slnx`; remove the unnecessary VSTest adapter and `Microsoft.NET.Test.Sdk` references. This follows [Microsoft's .NET 10 runner guidance](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test) and the xUnit [getting-started guide](https://xunit.net/docs/getting-started/v3/getting-started).
+
+No test mocking library, coverage service, EF InMemory provider, bUnit, or Playwright package is required initially. `Microsoft.AspNetCore.Mvc.Testing` is available at [10.0.13](https://www.nuget.org/packages/Microsoft.AspNetCore.Mvc.Testing), but is not an initial dependency: feature tests use real SQLite, and the small interactive UI receives browser smoke checks. M1.1 browser acceptance passed on 15 October 2026, including company creation, validation, unsaved-form navigation, and persistence after restarting Scout.
 
 ## 8. Decisions intentionally left open
 
@@ -254,4 +258,4 @@ The xUnit [getting-started guide](https://xunit.net/docs/getting-started/v3/gett
 | Recording, transcription, and AI providers | Provider/library choices, data-transfer authorization, and processing jobs wait for their milestone. Their independence and explicit user initiation are fixed constraints. |
 | UI refinement and localization | Begin with ordinary pages, local CSS, English labels, and Unicode content. Refine based on actual desktop use; no drag/drop, theming system, or resource catalog now. |
 
-There is no outstanding mandatory clarification before starting M1.1. The approved choices include independent archiving, a read-only original vacancy snapshot, startup migrations, a deliberately small field set, and the fixed Documents/Scout storage root.
+There is no outstanding architectural clarification. The approved choices include independent archiving, a read-only original vacancy snapshot, startup migrations, a deliberately small field set, and the fixed Documents/Scout storage root.

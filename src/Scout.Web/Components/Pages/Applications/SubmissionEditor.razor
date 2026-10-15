@@ -1,0 +1,23 @@
+@page "/applications/{ApplicationId:int}/submissions/new"
+@using Scout.Web.Features.Submissions
+@using Scout.Web.Features.Cvs
+@using Scout.Web.Features.Documents
+@inject SubmissionOperations Submissions
+@inject CvOperations Cvs
+@inject DocumentOperations Documents
+@inject Scout.Web.Features.Applications.ApplicationOperations Applications
+<PageTitle>Record submission · Scout</PageTitle><h1>Record an externally sent submission</h1><p>Record what you already sent outside Scout. This action saves a local history record.</p>
+<LoadPanel Load="LoadAsync" LoadKey="@ApplicationId.ToString()">@if(missing){<p>Application not found.</p>}else{<DraftForm Model="@model" Save="SaveAsync" CancelUrl="@($"/applications/{ApplicationId}")" SaveLabel="@(review?"Record submission":"Review submission")" FormName="SubmissionEditor">
+<fieldset disabled="@review"><legend>Submission details</legend><div class="field"><label for="date">Date submitted (required)</label><InputDate id="date" @bind-Value="model.SubmittedOn" /></div><div class="field"><label for="cv">Prepared CV (optional)</label><InputSelect id="cv" @bind-Value="model.PreparedCvId"><option value="">No CV file recorded</option>@foreach(var c in cvs){<option value="@c.Id">@c.DisplayName · @c.Language · @c.TechnologyFocus</option>}</InputSelect></div>
+<DocumentPicker Label="Cover letters (optional)" Documents="documents" Selected="model.CoverLetterIds" /><DocumentPicker Label="Other submitted files (optional)" Documents="documents" Selected="model.OtherDocumentIds" /><div class="field"><label for="notes">Submission notes</label><InputTextArea id="notes" @bind-Value="model.Notes" maxlength="100000" /></div><label class="checkbox-label"><InputCheckbox @bind-Value="model.SetAppliedStatus" /> Also set application status to Applied</label><label class="checkbox-label"><InputCheckbox @bind-Value="model.SetAppliedOnIfEmpty" /> Set date applied only if it is currently empty</label></fieldset>
+@if(review){<section class="message"><h2>Review before recording</h2><p>Submitted on @model.SubmittedOn.ToString("d"). @(model.SetAppliedStatus?"Set current status to Applied.":"Keep current status.")</p><p>CV: @(model.ReviewedCvLabel??"No file recorded") @if(model.PreparedCvId.HasValue){var cv=cvs.Single(c=>c.Id==model.PreparedCvId);<a href="@($"/documents/{cv.DocumentId}/view")" target="_blank" rel="noopener noreferrer">Check selected PDF</a>}</p>@foreach(var d in documents.Where(d=>model.CoverLetterIds.Contains(d.Id)||model.OtherDocumentIds.Contains(d.Id))){<p>@(model.CoverLetterIds.Contains(d.Id)?"Cover letter":"Other"): @d.OriginalName · <a href="@($"/documents/{d.Id}/download")" data-enhance-nav="false">Download to check</a></p>}<p>Confirm these files are the exact versions already sent. The recorded date, notes, files, and labels are then fixed. Mistakes can be marked incorrect while preserving evidence.</p><button type="button" @onclick="()=>review=false">Edit selection</button></section>}
+</DraftForm>}</LoadPanel>
+@code{
+    [Parameter]public int ApplicationId{get;set;}private SubmissionEditModel model=new();private bool review,missing;private IReadOnlyList<CvListItem> cvs=[];private IReadOnlyList<DocumentListItem> documents=[];
+    private async Task LoadAsync(){var app=await Applications.GetAsync(ApplicationId);missing=app is null;model=new(){ApplicationId=ApplicationId,SetAppliedStatus=app?.Status==ApplicationStatus.Planned};cvs=(await Cvs.ListAsync()).Where(c=>!c.DocumentIsArchived).ToList();documents=await Documents.ListAsync();review=false;}
+    private void Select(HashSet<int> ids,int id,bool add){if(add)ids.Add(id);else ids.Remove(id);}
+    private async Task<string> SaveAsync(){if(!review){if(model.SubmittedOn==default)throw new System.ComponentModel.DataAnnotations.ValidationException("Enter a submission date.");model.ReviewedCvLabel=cvs.SingleOrDefault(c=>c.Id==model.PreparedCvId)?.DisplayName;review=true;StateHasChanged();return "";}return $"/submissions/{await Submissions.RecordAsync(model)}";}
+}
+
+
+

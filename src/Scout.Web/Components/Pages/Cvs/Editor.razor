@@ -1,0 +1,15 @@
+@page "/cvs/import"
+@page "/cvs/{Id:int}/edit"
+@using Scout.Web.Features.Cvs
+@using Scout.Web.Storage
+@using System.ComponentModel.DataAnnotations
+@inject CvOperations Cvs
+<PageTitle>Prepared CV · Scout</PageTitle><h1>@(Id.HasValue?"Edit CV details":"Import CV version")</h1>
+<LoadPanel Load="LoadAsync" LoadKey="@Id.ToString()">@if(missing){<p>CV not found.</p>}else{<DraftForm Model="@model" Save="SaveAsync" CancelUrl="@Back" SaveLabel="@(Id.HasValue?"Save CV details":"Import CV version")" FormName="CvEditor">
+@if(!Id.HasValue){<DocumentFilePicker Selected="f=>selected=f" Label="CV PDF (required)" Accept=".pdf" />}<div class="field"><label for="label">CV label (required)</label><InputText id="label" @bind-Value="model.DisplayName" maxlength="200" /></div><div class="field"><label for="language">Language</label><InputText id="language" @bind-Value="model.Language" maxlength="20" /></div><div class="field"><label for="focus">Technology focus</label><InputText id="focus" @bind-Value="model.TechnologyFocus" maxlength="200" /></div><p>To save changed PDF contents, import a new version. Existing submissions keep their original files and labels.</p></DraftForm>}</LoadPanel>
+@code{
+    [Parameter]public int? Id{get;set;}[SupplyParameterFromQuery]public string? ListQuery{get;set;}private CvEditModel model=new();private IBrowserFile? selected;private bool missing;private string Back=>Id.HasValue?CatalogLinks.Record($"/cvs/{Id}",ListQuery):CatalogLinks.List("/cvs",ListQuery);
+    private async Task LoadAsync(){missing=false;model=new();if(Id.HasValue){var c=await Cvs.GetAsync(Id.Value);missing=c is null;if(c is not null)model=new(){DisplayName=c.DisplayName,Language=c.Language,TechnologyFocus=c.TechnologyFocus};}}
+    private async Task<string> SaveAsync(){var id=Id;if(id.HasValue){if(!await Cvs.UpdateAsync(id.Value,model))throw new ValidationException("CV no longer exists.");}else{if(selected is null)throw new ValidationException("Choose a PDF file.");await using var input=selected.OpenReadStream(DocumentFileStore.MaximumBytes);id=await Cvs.ImportAsync(selected.Name,input,model);}return CatalogLinks.Record($"/cvs/{id}",ListQuery);}
+}
+

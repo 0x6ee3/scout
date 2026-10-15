@@ -1,0 +1,12 @@
+@using Scout.Web.Features.InterviewPreparation
+@foreach(var choice in Choices)
+{
+<div><label class="checkbox-label"><input type="checkbox" checked="@(AlreadySelected.Contains(choice.Id) || Model.SelectedIds.Contains(choice.Id))" disabled="@AlreadySelected.Contains(choice.Id)" @onchange="e => Change(choice.Id, (bool)e.Value!)" />@choice.Label @(AlreadySelected.Contains(choice.Id) ? "(already selected)" : "")</label><TagBadges Values="choice.Tags" /></div>
+}
+@code {
+    [Parameter] public IEnumerable<PreparationChoice> Choices { get; set; } = [];
+    [Parameter, EditorRequired] public PreparationSelectionModel Model { get; set; } = default!;
+    [Parameter] public IReadOnlySet<int> AlreadySelected { get; set; } = new HashSet<int>();
+    [CascadingParameter] public EditContext Context { get; set; } = default!;
+    private void Change(int id, bool value) { if(value) Model.SelectedIds.Add(id); else Model.SelectedIds.Remove(id); Context.NotifyFieldChanged(new(Model, nameof(Model.SelectedIds))); }
+}

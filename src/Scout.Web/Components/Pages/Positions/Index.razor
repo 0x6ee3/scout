@@ -1,0 +1,59 @@
+@page "/positions"
+@using Scout.Web.Features.Positions
+@using Scout.Web.Features.Companies
+@inject PositionOperations Positions
+@inject CompanyOperations Companies
+@inject NavigationManager Navigation
+@inject ILogger<Index> Logger
+
+<PageTitle>Positions · Scout</PageTitle>
+<div class="page-heading"><div><p class="eyebrow">Your opportunities</p><h1>Positions</h1><p class="muted">Keep vacancy details and your own notes together.</p></div><a class="button" href="/positions/new">Add position</a></div>
+<form method="get" action="/positions" class="card catalog-filters" role="search" aria-label="Find positions">
+    <div class="filter-field search-field"><label for="search">Search positions</label><input id="search" name="q" value="@Search" placeholder="Title, company or location" /></div>
+    <div class="filter-field"><label for="company">Company</label><select id="company" name="companyId"><option value="" selected="@(!companyId.HasValue)">All companies</option>
+        @if (companyId.HasValue && !companies.Any(c => c.Id == companyId)) { <option value="@companyId" selected>Company not found</option> }
+        @foreach (var c in companies) { <option value="@c.Id" selected="@(companyId == c.Id)">@c.Name@(c.IsArchived ? " (archived)" : "")</option> }
+    </select></div>
+    <div class="filter-field"><label for="status">Opportunity status</label><select id="status" name="status"><option value="" selected="@(!status.HasValue)">All statuses</option>@foreach (var value in Enum.GetValues<PositionStatus>()) { <option value="@value" selected="@(status == value)">@value.DisplayName()</option> }</select></div>
+    <div class="filter-field"><label for="archive">Show positions</label><select id="archive" name="archive">@foreach (var value in Enum.GetValues<ArchiveFilter>()) { <option value="@value" selected="@(archive == value)">@value</option> }</select></div>
+    <div class="form-actions"><button type="submit">Search</button><a href="/positions">Reset</a></div>
+</form>
+@if (failed)
+{
+    <div class="message error" role="alert">Positions could not be loaded. Saved data has not been changed.</div><button @onclick="LoadAsync">Try again</button>
+}
+else if (items is null) { <p role="status">Loading positions…</p> }
+else if (items.Count == 0)
+{
+    <section class="card empty-state"><h2>No positions in this view</h2><p>Reset the filters to see active positions, or add a position for an active company.</p><div class="empty-actions"><a href="/positions">Reset filters</a><a class="button" href="/positions/new">Add position</a></div></section>
+}
+else
+{
+    <section class="card" aria-label="Saved positions">
+        <div class="list-caption" role="status">@items.Count @(items.Count == 1 ? "position" : "positions") · Most recently discovered first</div>
+        <ul class="company-list">@foreach (var item in items)
+        {
+            <li><a href="@CatalogLinks.Record($"/positions/{item.Id}", new Uri(Navigation.Uri).Query)"><div>@item.Title<small>@item.CompanyName@(item.Location is null ? "" : $" · {item.Location}")</small>@if (item.IsArchived) { <span class="badge">Archived position</span> } @if (item.CompanyIsArchived) { <span class="badge">Archived company</span> }</div><span>@item.Status.DisplayName()</span></a></li>
+        }</ul>
+    </section>
+}
+@code {
+    [SupplyParameterFromQuery(Name = "q")] public string? Search { get; set; }
+    [SupplyParameterFromQuery(Name = "archive")] public string? Archive { get; set; }
+    [SupplyParameterFromQuery(Name = "companyId")] public string? Company { get; set; }
+    [SupplyParameterFromQuery(Name = "status")] public string? Status { get; set; }
+    private ArchiveFilter archive => CatalogLinks.ParseEnum<ArchiveFilter>(Archive) ?? ArchiveFilter.Active;
+    private PositionStatus? status => CatalogLinks.ParseEnum<PositionStatus>(Status);
+    private int? companyId => int.TryParse(Company, out var id) && id > 0 ? id : null;
+    private IReadOnlyList<PositionListItem>? items;
+    private IReadOnlyList<CompanyListItem> companies = [];
+    private bool failed;
+    protected override Task OnParametersSetAsync() => LoadAsync();
+    private async Task LoadAsync()
+    {
+        failed = false;
+        try { companies = await Companies.ListAsync(ArchiveFilter.All); items = await Positions.ListAsync(companyId, archive, status, Search); }
+        catch (Exception ex) when (ex is Microsoft.Data.Sqlite.SqliteException or Microsoft.EntityFrameworkCore.DbUpdateException)
+        { Logger.LogError(ex, "Could not load positions."); failed = true; }
+    }
+}

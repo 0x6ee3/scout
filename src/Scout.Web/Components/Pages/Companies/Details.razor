@@ -1,0 +1,98 @@
+@page "/companies/{Id:int}"
+@using Scout.Web.Features.Companies
+@inject CompanyOperations Companies
+@inject ILogger<Details> Logger
+@inject Scout.Web.Features.Positions.PositionOperations Positions
+
+<PageTitle>@(company?.Name ?? "Company") · Scout</PageTitle>
+<a class="back-link" href="@CatalogLinks.List("/companies", ListQuery)">← Companies</a>
+
+@if (loading)
+{
+    <h1>Company</h1><p role="status">Loading company…</p>
+}
+else if (loadFailed)
+{
+    <h1>Company unavailable</h1>
+    <div class="message error" role="alert">The company could not be loaded. Your saved data has not been changed.</div>
+    <button @onclick="LoadAsync">Try again</button>
+}
+else if (company is null)
+{
+    <h1>Company not found</h1><p>There is no company with this address. Return to the company list to find an existing record.</p>
+}
+else
+{
+    <div class="page-heading">
+        <div><p class="eyebrow">Company</p><h1>@company.Name</h1><p class="muted">Saved in Scout on this computer.</p></div>
+        <a class="button" href="@CatalogLinks.Record($"/companies/{Id}/edit", ListQuery)">Edit company</a>
+    </div>
+    <section class="card details-card company-section">
+        <h2>Company information</h2><p><a href="@($"/contacts?companyId={Id}")">Company contacts</a> · <a href="@($"/contacts/new?companyId={Id}")">Add contact</a></p>
+        @if (company.IsArchived) { <p class="badge">Archived company</p> }
+        <dl>
+            <dt>Website</dt>
+            <dd>
+                @if (company.WebsiteUrl is not null)
+                {
+                    <a href="@company.WebsiteUrl" target="_blank" rel="noopener noreferrer">@company.WebsiteUrl<span class="visually-hidden"> (opens in a new tab)</span></a>
+                }
+                else { <span class="muted">Not added</span> }
+            </dd>
+            <dt>Location</dt><dd class="plain-text">@(company.Location ?? "Not added")</dd>
+        </dl>
+    </section>
+    <section class="card details-card company-section">
+        <h2>Reference description</h2>
+        @if (company.Description is null) { <p class="muted">No reference description added.</p> }
+        else { <p class="plain-text">@company.Description</p> }
+    </section>
+    <section class="card details-card company-section">
+        <h2>Personal notes</h2>
+        @if (company.PersonalNotes is null) { <p class="muted">No personal notes added.</p> }
+        else { <p class="plain-text">@company.PersonalNotes</p> }
+    </section>
+    <section class="card details-card company-section">
+        <h2>Positions</h2>
+        @if (!company.IsArchived) { <a class="button" href="@($"/positions/new?companyId={Id}")">Add position</a> }
+        else { <p class="muted">Restore this company before adding a position.</p> }
+        @if (positions.Count == 0) { <p class="muted">No positions added yet.</p> }
+        else { <ul class="related-list">@foreach (var item in positions) { <li><a href="@($"/positions/{item.Id}")">@item.Title</a> · @item.Status.DisplayName() @if (item.IsArchived) { <span class="badge">Archived position</span> }</li> }</ul> }
+    </section>
+    <Attachments Kind="Scout.Web.Features.Documents.DocumentOwnerKind.Company" OwnerId="Id" ReturnUrl="@($"/companies/{Id}")" /><ArchiveActions IsArchived="company.IsArchived" Subject="company"
+        Explanation="Archiving hides this company from the active company list. Its positions keep their own state and remain linked. You can restore the company at any time."
+        Save="@(archived => Companies.SetArchivedAsync(Id, archived))" OnChanged="LoadAsync" />
+    <section class="card details-card">
+        <h2>Record details</h2>
+        <dl>
+            <dt>Created</dt><dd>@company.CreatedAtUtc.ToLocalTime().ToString("g")</dd>
+            <dt>Last updated</dt><dd>@company.UpdatedAtUtc.ToLocalTime().ToString("g")</dd>
+            <dt>State</dt><dd>@(company.IsArchived ? "Archived" : "Active")</dd>
+        </dl>
+    </section>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [SupplyParameterFromQuery] public string? ListQuery { get; set; }
+    private CompanyDetails? company;
+    private IReadOnlyList<Scout.Web.Features.Positions.PositionListItem> positions = [];
+    private bool loading = true;
+    private bool loadFailed;
+    protected override Task OnParametersSetAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        loadFailed = false;
+        try { company = await Companies.GetAsync(Id); positions = await Positions.ListAsync(Id, ArchiveFilter.All); }
+        catch (Exception exception) when (exception is Microsoft.Data.Sqlite.SqliteException or Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            Logger.LogError(exception, "Could not load company {CompanyId}.", Id);
+            loadFailed = true;
+        }
+        finally { loading = false; }
+    }
+}
+
+

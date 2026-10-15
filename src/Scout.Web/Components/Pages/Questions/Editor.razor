@@ -1,0 +1,23 @@
+@page "/questions/new"
+@page "/questions/{Id:int}/edit"
+@using Scout.Web.Features.Questions
+@inject QuestionOperations Questions
+<PageTitle>Question · Scout</PageTitle><h1>@(Id.HasValue ? "Edit question" : "Add employer question")</h1>
+<LoadPanel Load="LoadAsync" LoadKey="@Id.ToString()">
+@if(missing) { <p>Question not found. It may have been deleted.</p> } else {
+<DraftForm Model="@model" Save="SaveAsync" CancelUrl="@Back" SaveLabel="Save question" FormName="QuestionEditor">
+    <div class="field"><label for="question">Question (required)</label><InputTextArea id="question" @bind-Value="model.Text" maxlength="4000" /></div>
+    <div class="field"><label for="intent">Intent / what to learn</label><InputTextArea id="intent" @bind-Value="model.Intent" maxlength="100000" /></div>
+    <div class="field"><label for="follow">Suggested follow-ups</label><InputTextArea id="follow" @bind-Value="model.FollowUpQuestions" maxlength="100000" /></div>
+    <div class="field"><label for="notes">Private library notes</label><InputTextArea id="notes" @bind-Value="model.Notes" maxlength="100000" /></div>
+    <TagEditor @bind-Value="model.Tags" />
+</DraftForm> }
+</LoadPanel>
+@code {
+    [Parameter] public int? Id { get; set; }
+    [SupplyParameterFromQuery] public string? ListQuery { get; set; }
+    private QuestionEditModel model = new(); private bool missing;
+    private string Back => Id.HasValue ? CatalogLinks.Record($"/questions/{Id}", ListQuery) : CatalogLinks.List("/questions", ListQuery);
+    private async Task LoadAsync() { missing = false; model = new(); if(Id.HasValue) { var row = await Questions.GetAsync(Id.Value); missing = row is null; if(row is not null) model = new() { Text = row.Text, Intent = row.Intent, FollowUpQuestions = row.FollowUpQuestions, Notes = row.Notes, Tags = row.Tags.Select(x => x.Tag).ToList() }; } StateHasChanged(); }
+    private async Task<string> SaveAsync() => CatalogLinks.Record($"/questions/{await Questions.SaveAsync(Id, model)}", ListQuery);
+}

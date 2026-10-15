@@ -1,0 +1,6 @@
+@page "/cvs/{Id:int}"
+@using Scout.Web.Features.Cvs
+@inject CvOperations Cvs
+<PageTitle>Prepared CV · Scout</PageTitle><a href="@CatalogLinks.List("/cvs",ListQuery)">← Prepared CVs</a><LoadPanel Load="LoadAsync" LoadKey="@Id.ToString()">@if(cv is null){<h1>CV not found</h1>}else{<h1>@cv.DisplayName</h1><p>@cv.Language · @cv.TechnologyFocus</p><a href="@CatalogLinks.Record($"/cvs/{Id}/edit",ListQuery)">Edit CV details</a><section class="card details-card company-section"><h2>Preserved PDF</h2><a href="@($"/documents/{cv.DocumentId}")">@cv.Document.OriginalName</a><p><a href="@($"/documents/{cv.DocumentId}/view")" target="_blank" rel="noopener noreferrer">Open PDF</a> · <a href="@($"/documents/{cv.DocumentId}/download")" data-enhance-nav="false">Download original</a></p><p>@cv.Document.Size.ToString("N0") bytes · @cv.Document.Sha256</p></section><ArchiveActions IsArchived="cv.IsArchived" Subject="CV" Explanation="Existing submissions keep this version." Save="@(a=>Cvs.SetArchivedAsync(Id,a))" OnChanged="LoadAsync" />}</LoadPanel>
+@code{[Parameter]public int Id{get;set;}[SupplyParameterFromQuery]public string? ListQuery{get;set;}private PreparedCv? cv;private async Task LoadAsync()=>cv=await Cvs.GetAsync(Id);}
+

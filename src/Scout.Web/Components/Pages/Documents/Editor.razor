@@ -1,0 +1,20 @@
+@page "/documents/import"
+@page "/documents/{Id:int}/edit"
+@using Scout.Web.Features.Documents
+@using Scout.Web.Storage
+@using System.ComponentModel.DataAnnotations
+@inject DocumentOperations Documents
+<PageTitle>Document · Scout</PageTitle><h1>@(Id.HasValue?"Edit document details":"Import document")</h1>
+<LoadPanel Load="LoadAsync" LoadKey="@Id.ToString()">@if(missing){<p>Document not found.</p>}else{<DraftForm Model="@model" Save="SaveAsync" CancelUrl="@Back" SaveLabel="@(Id.HasValue?"Save details":"Import file")" FormName="DocumentEditor">
+@if(Id.HasValue){<p>@name. Original bytes and import facts stay fixed.</p>}else{<DocumentFilePicker Selected="f=>selected=f" />@if(!string.IsNullOrEmpty(OwnerKind)){<p>Attach to @OwnerKind #@OwnerId.</p>}}
+<div class="field"><label for="category">Category</label><InputText id="category" @bind-Value="model.Category" maxlength="200" /></div><div class="field"><label for="description">Description</label><InputTextArea id="description" @bind-Value="model.Description" maxlength="100000" /></div>
+</DraftForm>}</LoadPanel>
+@code{
+    [Parameter]public int? Id{get;set;}[SupplyParameterFromQuery]public string? OwnerKind{get;set;}[SupplyParameterFromQuery]public int OwnerId{get;set;}[SupplyParameterFromQuery]public string? ListQuery{get;set;}
+    private DocumentEditModel model=new();private IBrowserFile? selected;private bool missing;private string? name;
+    private string Back=>Id.HasValue?CatalogLinks.Record($"/documents/{Id}",ListQuery):CatalogLinks.List("/documents",ListQuery);
+    private async Task LoadAsync(){missing=false;model=new();if(Id.HasValue){var d=await Documents.GetAsync(Id.Value);missing=d is null;if(d is not null){name=d.OriginalName;model=new(){Category=d.Category,Description=d.Description};}}}
+    private async Task<string> SaveAsync(){var id=Id;if(id.HasValue){if(!await Documents.UpdateAsync(id.Value,model))throw new ValidationException("Document no longer exists.");}else{if(selected is null)throw new ValidationException("Choose a file.");await using var input=selected.OpenReadStream(DocumentFileStore.MaximumBytes);id=await Documents.ImportAsync(selected.Name,input,model,new(CatalogLinks.ParseEnum<DocumentOwnerKind>(OwnerKind)??DocumentOwnerKind.None,OwnerId));}return CatalogLinks.Record($"/documents/{id}",ListQuery);}
+}
+
+

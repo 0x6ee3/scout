@@ -1,0 +1,7 @@
+@using Scout.Web.Features.Interviews
+@using Scout.Web.Features.NextActions
+@inject InterviewOperations Interviews
+@inject NextActionOperations Actions
+<section class="card details-card company-section"><h2>Next actions</h2><p><a href="@($"/next-actions?applicationId={ApplicationId}")">All actions and filters</a> · <a href="@($"/next-actions/new?applicationId={ApplicationId}")">Add action</a></p>@if(actions.Count==0){<p>No open actions.</p>}@foreach(var a in actions){<p><a href="@($"/next-actions/{a.Id}")">@a.Title</a> · @(a.DueOn?.ToString("d")??"No due date")</p>}</section>
+<section class="card details-card company-section"><h2>Interview rounds</h2><a href="@($"/applications/{ApplicationId}/interviews/new")">Add interview</a>@if(rounds.Count==0){<p>No interviews yet.</p>}@foreach(var r in rounds){<p><a href="@($"/interviews/{r.Id}")">@r.Title</a> · @r.Type · @r.Status @(r.IsArchived?"· Archived":"")</p>}</section>
+@code{[Parameter]public int ApplicationId{get;set;}private IReadOnlyList<NextActionListItem> actions=[];private IReadOnlyList<InterviewListItem> rounds=[];protected override async Task OnParametersSetAsync(){actions=await Actions.ListAsync(applicationId:ApplicationId);rounds=await Interviews.ListAsync(ApplicationId,ArchiveFilter.All);}}

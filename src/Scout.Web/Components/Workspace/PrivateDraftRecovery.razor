@@ -1,0 +1,9 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+<h2>Browser drafts for this Workspace</h2><p>Private recovery may include fields removed in a later review. Copy wanted text into private interview/preparation editors, save it, then explicitly review and approve its inclusion. Restoring content here never grants shared visibility.</p><div @ref="element"></div>
+@code {
+    [Parameter] public Guid WorkspaceId {get;set;} [Parameter] public int RoundId {get;set;}
+    private ElementReference element;private IJSObjectReference? module;
+    protected override async Task OnAfterRenderAsync(bool firstRender){if(!firstRender)return;try{module=await JS.InvokeAsync<IJSObjectReference>("import","./js/workspace-drafts.js");await module.InvokeVoidAsync("privateRecovery",element,WorkspaceId.ToString(),RoundId);}catch(JSDisconnectedException){}catch(JSException){}}
+    public async ValueTask DisposeAsync(){if(module is not null){try{await module.DisposeAsync();}catch(JSDisconnectedException){}}}
+}

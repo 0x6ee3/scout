@@ -1,0 +1,138 @@
+@page "/interviews/{RoundKey}/workspace"
+@page "/interviews/{RoundKey}/workspace/{*UnknownPath}"
+@layout WorkspaceLayout
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@using Scout.Web.Features.InterviewWorkspace
+@inject WorkspaceOperations Operations
+@using Scout.Web.Components.Workspace
+<PageTitle>Scout · Interview Workspace</PageTitle>
+<h1>Interview Workspace</h1>
+@if(view is null) { <p>Workspace unavailable. Close this tab and review its content privately before reopening.</p> }
+else
+{
+<p>Interview-scoped view · Approved @view.ApprovedAtUtc.ToLocalTime().ToString("g") @(view.ReadOnly ? "· Read only" : "")</p>
+<div class="workspace-tools">
+<label for="workspace-search">Search included questions and experiences</label>
+<input id="workspace-search" type="search" data-workspace-search />
+<label for="workspace-state">Question filter</label>
+<select id="workspace-state" data-workspace-state>
+<option value="all">All questions</option>
+<option value="unasked">Unasked</option>
+<option value="asked">Asked</option>
+<option value="unanswered">Unanswered</option>
+<option value="follow">Follow-up required</option>
+</select>
+<label for="workspace-preset">Layout</label>
+<select id="workspace-preset" data-workspace-preset>
+<option value="balanced">Balanced</option>
+<option value="notes-wide">Notes wide</option>
+</select>
+<p>Close this tab to leave the shared view.</p>
+</div>
+<div class="workspace-grid" @key="(view.WorkspaceId,view.Revision,view.ReadOnly)">
+<details open class="card" data-workspace-panel>
+<summary>Interview and position</summary>
+<h2>@view.RoundTitle</h2>
+<p>@view.CompanyName @view.PositionTitle</p>
+<p>@view.ScheduledAtUtc?.ToLocalTime().ToString("g")</p>
+<p class="plain-text">@view.JobDescription</p>
+</details>
+<details open class="card" data-workspace-panel>
+<summary>Submitted CV</summary>@if(view.HasCv){<a href="@CvUrl("download")" download>Download submitted CV</a>
+<iframe title="Submitted CV" src="@CvUrl("view")">
+</iframe>}else{<p>No submitted CV included.</p>}
+</details>
+<details open class="card" data-workspace-panel>
+<summary>Questions to ask</summary>
+@if(view.Questions.Count == 0){<p>No questions included.</p>}@foreach(var q in view.Questions){<article data-filterable="question">
+<h2>@q.Text</h2>
+<TagBadges Values="@(System.Text.Json.JsonSerializer.Deserialize<string[]>(q.TagsJson) ?? [])" />
+<p class="plain-text">@q.Intent</p>
+<p class="plain-text">@q.FollowUps</p>
+<p class="plain-text">@q.PreparationNotes</p>
+<CaptureEditor WorkspaceId="view.WorkspaceId" @key="q.Id" RoundId="view.RoundId" ConfigurationRevision="view.Revision" QuestionId="q.Id" Revision="q.ContentRevision" Text="@q.Answer" TextEnabled="q.AnswerEnabled" Asked="q.IsAsked" FollowUp="q.FollowUpRequired" ReadOnly="view.ReadOnly" />
+</article>}
+</details>
+<details open class="card" data-workspace-panel>
+<summary>STAR cues</summary>
+@if(view.Experiences.Count == 0){<p>No STAR experiences included.</p>}@foreach(var e in view.Experiences){<article data-filterable="experience">
+<h2>@e.Title</h2>
+<TagBadges Values="@(System.Text.Json.JsonSerializer.Deserialize<string[]>(e.TagsJson) ?? [])" />
+<p class="plain-text">@e.Cue</p>
+<details>
+<summary>Approved STAR fields</summary>@foreach(var field in new[]{("Situation",e.Situation),("Task",e.Task),("Action",e.Action),("Result",e.Result),("Reflection",e.Reflection),("Useful for",e.UsefulFor),("Notes",e.Notes),("Rehearsal notes",e.PreparationNotes)}){if(field.Item2 is not null){<h3>@field.Item1</h3>
+<p class="plain-text">@field.Item2</p>}}
+</details>
+</article>}
+</details>
+<details open class="card workspace-notes-panel" data-workspace-panel>
+<summary>Notes and prior answers</summary>
+<p class="plain-text">@view.PreparationNotes</p>@if(view.NotesEnabled){<CaptureEditor WorkspaceId="view.WorkspaceId" RoundId="view.RoundId" ConfigurationRevision="view.Revision" Revision="view.NotesRevision" Text="@view.InterviewNotes" ReadOnly="view.ReadOnly" Label="Interview notes" />}
+@foreach(var p in view.PriorAnswers){<article>
+<h3>@p.RoundTitle · @p.ScheduledAtUtc?.ToLocalTime().ToString("g")</h3>
+<p>@p.Text</p>
+<p class="plain-text">@p.Answer</p>
+</article>}
+</details>
+</div>
+@if(!view.ReadOnly){<section class="card">
+<h2>Add an ad hoc question</h2>
+<CaptureEditor WorkspaceId="view.WorkspaceId" RoundId="view.RoundId" ConfigurationRevision="view.Revision" Creation="true" Label="Question wording (included immediately)" OnCreated="RefreshAsync" />
+</section>} }
+@code {
+    [Parameter] public string RoundKey { get; set; } = "";
+    [Parameter] public string? UnknownPath { get; set; }
+    private WorkspaceView? view;
+    private IJSObjectReference? module;
+    private DotNetObjectReference<Workspace>? self;
+    private bool registered;
+
+    private async Task RefreshAsync()
+    {
+        if (view is not null) view = await Operations.GetAsync(view.RoundId, view.Revision);
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (view is null || registered) return;
+        registered = true;
+        try
+        {
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/workspace-drafts.js");
+            self = DotNetObjectReference.Create(this);
+            await module.InvokeVoidAsync("registerWorkspace", self, view.WorkspaceId.ToString());
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
+    }
+
+    [JSInvokable]
+    public async Task<bool> CheckCurrent()
+    {
+        if (view is null) return false;
+        var current = await Operations.IsCurrentAsync(view.RoundId, view.Revision, view.ReadOnly);
+        if (!current) { view = null; await InvokeAsync(StateHasChanged); }
+        return current;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (module is not null)
+        {
+            try { await module.InvokeVoidAsync("disposeWorkspace"); await module.DisposeAsync(); }
+            catch (JSDisconnectedException) { }
+            catch (JSException) { }
+        }
+        self?.Dispose();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        view = null;
+        if (UnknownPath is null && int.TryParse(RoundKey, out var id)) view = await Operations.GetAsync(id);
+    }
+
+    private string CvUrl(string action) => $"/interviews/{view!.RoundId}/workspace/cv/{action}?revision={view.Revision}";
+}

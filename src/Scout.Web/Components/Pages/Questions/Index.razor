@@ -1,0 +1,27 @@
+@page "/questions"
+@using Scout.Web.Features.Questions
+@inject QuestionOperations Questions
+@inject TagOperations TagOperations
+@inject NavigationManager Navigation
+<PageTitle>Employer questions · Scout</PageTitle>
+<div class="page-heading"><div><h1>Employer questions</h1><p>Reusable questions. Answers belong to individual interviews.</p></div><a class="button" href="@CatalogLinks.Record("/questions/new", Query)">Add question</a></div>
+<form method="get" action="/questions" class="card catalog-filters" role="search">
+    <div class="field"><label for="q">Search questions</label><input id="q" name="q" value="@Search" /></div>
+    <div class="field"><label for="tag">Tag</label><select id="tag" name="tag"><option value="">All tags</option>@foreach(var tag in tags) { <option value="@tag" selected="@(Tag == tag)">@tag</option> }</select></div>
+    <div class="field"><label for="archive">Show</label><select id="archive" name="archive">@foreach(var a in Enum.GetValues<ArchiveFilter>()) { <option value="@a" selected="@(Filter == a)">@a</option> }</select></div>
+    <button type="submit">Search</button><a href="/questions">Reset</a>
+</form>
+<LoadPanel Load="LoadAsync" LoadKey="@Query">
+@if(items.Count == 0) { <p class="card">@(string.IsNullOrEmpty(Query) ? "No employer questions yet. Add your first question." : "No questions match this view. Reset the filters or add a question.")</p> }
+else { <ul class="card preparation-list">@foreach(var item in items) { <li><a href="@CatalogLinks.Record($"/questions/{item.Id}", Query)">@item.Text</a><TagBadges Values="item.Tags" />@if(item.IsArchived) { <span class="badge">Archived</span> }</li> }</ul> }
+</LoadPanel>
+@code {
+    [SupplyParameterFromQuery(Name="q")] public string? Search { get; set; }
+    [SupplyParameterFromQuery(Name="tag")] public string? Tag { get; set; }
+    [SupplyParameterFromQuery(Name="archive")] public string? Archive { get; set; }
+    private ArchiveFilter Filter => CatalogLinks.ParseEnum<ArchiveFilter>(Archive) ?? ArchiveFilter.Active;
+    private string Query => new Uri(Navigation.Uri).Query;
+    private IReadOnlyList<QuestionListItem> items = [];
+    private IReadOnlyList<string> tags = [];
+    private async Task LoadAsync() { items = await Questions.ListAsync(Filter, Search, Tag); tags = await TagOperations.SuggestionsAsync(); StateHasChanged(); }
+}

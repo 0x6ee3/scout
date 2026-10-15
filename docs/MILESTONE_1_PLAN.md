@@ -1,6 +1,6 @@
 # Scout: Milestone 1 implementation plan
 
-Status: approved by the user, with a fixed Documents/Scout storage root; implementation has not started.  
+Status: M1.1–M1.6 implemented and verified; remaining verification limits are recorded below.
 Date: 15 October 2026.  
 Architecture and dependency pins: [MILESTONE_1_ARCHITECTURE.md](MILESTONE_1_ARCHITECTURE.md).  
 Source of scope: [SCOUT_SPEC.md, section 10](SCOUT_SPEC.md#10-roadmap).
@@ -12,6 +12,29 @@ After Milestone 1, the user can launch Scout on Windows using `dotnet run --proj
 Included: one Blazor application, basic navigation/local styling, one SQLite database, EF migrations, a fixed `<user home>\Documents\Scout` storage root, minimal company/position fields, search/filtering, and optional fictional development samples.
 
 Excluded: applications, contacts, timelines, next actions, interviews, dashboards, document/file import, CV management, question/experience libraries, Workspace, recording, transcription, AI, scraping, integrations, installers, and automated backup. Do not add their tables, screens, dependencies, or abstraction scaffolding.
+
+## Implementation status
+
+| Slice | Status |
+| --- | --- |
+| M1.1 | Complete. Clean build, 16 automated tests passing, model/migration check passing, local HTTP/WebSocket/listener and JS/CSS resource checks passing. Startup/restart and LAN-override protection verified. Browser creation, validation, list/details, unsaved-form choices, missing-company handling, and persistence after process restart verified. Layout visually inspected. |
+| M1.2 | Complete. Website, location, reference description, and separate personal notes; one create/edit page with validation and unsaved-navigation protection. Additive migration reviewed and applied. Clean build, 34 tests passing, no pending EF model changes. Keyboard create/edit, invalid-URL draft retention, both cancel choices, encoded multiline notes, deliberate website opening, missing edit record, and layout verified in the browser. Failed writes tested with isolated read-only SQLite connections. |
+| M1.3 | Complete. Clean build and 50 tests passing. Both creation entry points, preselected company, default values, immutable multiline vacancy text, editable notes/status, company links, and persistence after restarting Scout verified. Additive Positions migration reviewed. |
+| M1.4 | Complete. Clean build and 53 tests passing. Independent company/position archive and restore, preserved status/text/links, and visible active positions with an archived-company badge verified in the browser. No schema changes. |
+| M1.5 | Complete. Clean build and 59 tests passing. Literal Unicode search, combined archive/company/status predicates, stable sorting, query-preserving company/position detail navigation, no-match guidance, and reset verified. |
+| M1.6 | Complete. Clean build, 68 tests passing, no pending EF model changes. Opt-in fictional development samples tested for environment/empty-table guards, idempotence, preservation of edits, and atomic rollback. Fresh migration/full workflow and read-only reopening of a stopped file copy pass. Ordinary runtime browser layout and restart verified. Manual whole-root backup copied and checked without changing originals. README updated with launch, storage, sample, migration, backup/restore, troubleshooting, and known limits. |
+
+All six slices are implemented. Sample insertion remains disabled by default and was verified in isolated temporary databases. Browser testing created `[Browser test] München & Söhne` and `[Browser test M1.2] Beispiel & Söhne`, plus `[Browser test] .NET Entwickler` and `[Browser test] Platform Engineer` under the latter company; these remain active in the local database for inspection after archive/restore checks. See the [README](../README.md) for current launch commands, behavior, backup instructions, and verification details.
+
+Final acceptance on 15 October 2026 ran in Production without a launch profile, build, or restore. The saved snapshot, status, and notes survived restart. Desktop catalog layout was visually inspected. The stopped whole-root backup at `.local/backups/m1-20261015-182455` includes SQLite sidecars; main database/WAL hashes matched the source, integrity check returned `ok`, foreign-key check returned no rows, and all two companies, two positions, and three migrations remained readable. No personal data was reset or replaced.
+
+Verification limit: no operating-system network adapter was disabled. Scout's runtime code has no outbound HTTP client or remote UI assets; the local workflow and no-restore launch were exercised, but this is not a claim that an OS-level disconnected-network test was performed. Browser checks are smoke checks rather than an automated UI suite. These limits do not introduce external runtime dependencies or later-milestone infrastructure.
+
+M1.2 uses one `Editor.razor` page for both create and edit routes. Feature operations validate a normalized copy of the draft, copy only editable fields, and use one database commit per save. Names, websites, and locations are trimmed; nonblank long text retains exact whitespace and line breaks. Blank optional input becomes null. No dependencies or later-slice features were added. Failed-write tests verify draft/stored-data preservation without changing permissions on personal data.
+
+Browser acceptance on 15 October 2026 found that page-level interactivity let enhanced navigation bypass the unsaved-form guard. Moving Interactive Server rendering to the router fixed the issue; both **Keep editing** and **Leave without saving** were then verified. The build and all 16 automated tests passed again after the change.
+
+Implementation adjustment: use the .NET 10 Microsoft Testing Platform runner selected in `global.json`, rather than the initially proposed VSTest adapter/Test SDK combination. The restored xUnit/MTP packages reject the legacy entry point; no extra test infrastructure was added.
 
 ## Delivery approach
 
@@ -139,12 +162,12 @@ Build and run relevant tests after each slice; run the complete small suite at t
 dotnet tool restore
 dotnet restore Scout.slnx
 dotnet build Scout.slnx --no-restore
-dotnet test Scout.slnx --no-build
+dotnet test --solution Scout.slnx --no-build
 dotnet ef migrations has-pending-model-changes --project src/Scout.Web --startup-project src/Scout.Web
 dotnet run --project src/Scout.Web
 ```
 
-These are future verification commands, not commands executed by this planning task. First restore needs access to the package feed; ordinary Scout usage must not depend on an external service. EF design-time commands must resolve the same configured storage settings and must not seed.
+These commands are used for implementation verification; M1.1 results are recorded above. First restore needs access to the package feed; ordinary Scout usage must not depend on an external service. EF design-time commands must resolve the same fixed storage paths and must not seed.
 
 ## Final user acceptance walkthrough
 

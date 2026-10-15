@@ -1,0 +1,31 @@
+@page "/applications/{ApplicationId:int}/events/new"
+@page "/events/{Id:int}/edit"
+@using Scout.Web.Features.Timeline
+@using Scout.Web.Features.Contacts
+@using Scout.Web.Features.Applications
+@inject TimelineOperations Timeline
+@inject ContactOperations Contacts
+@inject ApplicationOperations Applications
+<PageTitle>Timeline event · Scout</PageTitle><h1>@(Id.HasValue ? "Edit timeline event" : "Add timeline event")</h1>
+<LoadPanel Load="LoadAsync" LoadKey="@($"{Id}/{ApplicationId}")">
+@if (missing) { <p>Application or editable event not found.</p> } else {
+<DraftForm Model="@model" Save="SaveAsync" CancelUrl="@($"/applications/{model.ApplicationId}/timeline")" SaveLabel="Save event" FormName="TimelineEditor">
+<div class="field"><label for="kind">Event kind</label><InputSelect id="kind" @bind-Value="model.Kind">@foreach (var k in Enum.GetValues<TimelineKind>().Where(k => k is not (TimelineKind.ApplicationCreated or TimelineKind.StatusChanged))) { <option value="@k">@k</option> }</InputSelect></div>
+<div class="field"><label for="date">Event date (required)</label><InputDate id="date" @bind-Value="model.EventDate" /></div>
+<LocalTimeField @bind-Value="model.LocalOccurrence" @bind-OffsetMinutes="model.OffsetMinutes" />
+<p>A historical event records what happened. It does not change the current application status or send a message.</p>
+<div class="field"><label for="description">Description (required)</label><InputTextArea id="description" @bind-Value="model.Description" maxlength="100000" /></div>
+<ContactPicker Contacts="contacts" Selected="model.ContactIds" Model="@model" />
+</DraftForm> }
+</LoadPanel>
+@code {
+    [Parameter] public int ApplicationId { get; set; } [Parameter] public int? Id { get; set; }
+    private TimelineEditModel model = new(); private bool missing; private IReadOnlyList<ContactListItem> contacts = [];
+    private async Task LoadAsync() {
+        missing = false; model = new() { ApplicationId = ApplicationId };
+        if (Id.HasValue) { var e = await Timeline.GetAsync(Id.Value); if (e is null || e.IsSystem) { missing = true; return; } model = new() { ApplicationId = e.ApplicationId, EventDate = e.EventDate, Kind = e.Kind, Description = e.Description, LocalOccurrence = e.OccurredAtUtc?.ToLocalTime(), OffsetMinutes = e.OccurredAtUtc.HasValue ? (int)TimeZoneInfo.Local.GetUtcOffset(e.OccurredAtUtc.Value).TotalMinutes : null, ContactIds = await Timeline.SelectionAsync(e.Id) }; }
+        var a = await Applications.GetAsync(model.ApplicationId); missing = a is null; if (a is not null) contacts = await Contacts.ListAsync(a.Position.CompanyId, ArchiveFilter.All);
+    }
+    private async Task<string> SaveAsync() { await Timeline.SaveAsync(Id, model); return $"/applications/{model.ApplicationId}/timeline"; }
+}
+

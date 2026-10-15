@@ -1,0 +1,9 @@
+@page "/documents"
+@using Scout.Web.Features.Documents
+@inject DocumentOperations Documents
+@inject NavigationManager Navigation
+<PageTitle>Documents · Scout</PageTitle><h1>Documents</h1><a class="button" href="@CatalogLinks.Record("/documents/import",Query)">Import document</a><form method="get" action="/documents" class="filter-form"><label>Search filenames and descriptions <input name="q" value="@Q" /></label><label>Category <input name="category" value="@Category" /></label><label>Archive <select name="archive" value="@Archive">@foreach(var a in Enum.GetValues<ArchiveFilter>()){<option value="@a" selected="@((CatalogLinks.ParseEnum<ArchiveFilter>(Archive)??ArchiveFilter.Active)==a)">@a</option>}</select></label><button>Apply filters</button><a href="/documents">Clear</a></form>
+<LoadPanel Load="LoadAsync" LoadKey="@Navigation.Uri">@if(rows.Count==0){<p>No documents match.</p>}@foreach(var d in rows){<article class="card details-card company-section"><h2><a href="@CatalogLinks.Record($"/documents/{d.Id}",Query)">@d.OriginalName</a></h2><p>@d.Category · @d.Size.ToString("N0") bytes · @d.ImportedAtUtc.ToLocalTime().ToString("g") @(d.IsArchived?"· Archived":"")</p></article>}</LoadPanel>
+@code{[SupplyParameterFromQuery]public string? Q{get;set;}[SupplyParameterFromQuery]public string? Category{get;set;}[SupplyParameterFromQuery]public string? Archive{get;set;}private string Query=>new Uri(Navigation.Uri).Query;private IReadOnlyList<DocumentListItem> rows=[];private async Task LoadAsync()=>rows=await Documents.ListAsync(CatalogLinks.ParseEnum<ArchiveFilter>(Archive)??ArchiveFilter.Active,Q,Category);}
+
+

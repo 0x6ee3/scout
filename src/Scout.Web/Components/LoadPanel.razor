@@ -1,0 +1,26 @@
+@inject ILogger<LoadPanel> Logger
+@if (loading) { <p role="status">Loading…</p> }
+else if (error) { <div class="message error" role="alert">This page could not be loaded. Saved data has not been changed.</div><button @onclick="LoadAsync">Try again</button> }
+else { @ChildContent }
+@code {
+    [Parameter, EditorRequired] public Func<Task> Load { get; set; } = default!;
+    [Parameter] public string? LoadKey { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    private bool loading = true, error;
+    private bool initialized;
+    private string? previousKey;
+    protected override Task OnParametersSetAsync()
+    {
+        if (initialized && previousKey == LoadKey) return Task.CompletedTask;
+        initialized = true; previousKey = LoadKey;
+        return LoadAsync();
+    }
+    private async Task LoadAsync()
+    {
+        loading = true; error = false;
+        try { await Load(); }
+        catch (Exception ex) when (ex is Microsoft.EntityFrameworkCore.DbUpdateException or Microsoft.Data.Sqlite.SqliteException or IOException or UnauthorizedAccessException or System.ComponentModel.DataAnnotations.ValidationException)
+        { Logger.LogError(ex, "Could not load a record page."); error = true; }
+        finally { loading = false; }
+    }
+}

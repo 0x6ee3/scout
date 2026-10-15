@@ -1,0 +1,5 @@
+@foreach (var tag in Values.Order())
+{
+    <span class="tag-badge @Tags.Color(tag)">@tag</span>
+}
+@code { [Parameter] public IEnumerable<string> Values { get; set; } = []; }

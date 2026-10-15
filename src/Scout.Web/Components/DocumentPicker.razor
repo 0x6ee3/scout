@@ -1,0 +1,6 @@
+@using Scout.Web.Features.Documents
+<fieldset><legend>@Label</legend>@foreach(var d in Documents){<label class="checkbox-label"><input type="checkbox" checked="@Selected.Contains(d.Id)" @onchange="e=>Change(d.Id,(bool)e.Value!)" /> @d.OriginalName · #@d.Id</label>}</fieldset>
+@code{
+    [Parameter]public string Label{get;set;}="Documents (optional)";[Parameter]public IReadOnlyList<DocumentListItem> Documents{get;set;}=[];[Parameter]public HashSet<int> Selected{get;set;}=[];[CascadingParameter]public EditContext Context{get;set;}=default!;
+    private void Change(int id,bool add){if(add)Selected.Add(id);else Selected.Remove(id);Context.NotifyFieldChanged(new(Context.Model,Label));}
+}

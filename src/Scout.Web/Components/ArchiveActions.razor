@@ -1,0 +1,37 @@
+@inject ILogger<ArchiveActions> Logger
+
+<section class="card details-card company-section" aria-label="Archive controls">
+    <h2>@(IsArchived ? "Restore this " : "Archive this ")@Subject</h2>
+    <p>@Explanation</p>
+    @if (error is not null) { <p class="message error" role="alert">@error</p> }
+    <button disabled="@busy" @onclick="ChangeAsync">@(busy ? "Saving…" : IsArchived ? $"Restore {Subject}" : $"Archive {Subject}")</button>
+</section>
+
+@code {
+    [Parameter] public bool IsArchived { get; set; }
+    [Parameter, EditorRequired] public string Subject { get; set; } = "record";
+    [Parameter, EditorRequired] public string Explanation { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public Func<bool, Task<bool>> Save { get; set; } = default!;
+    [Parameter] public EventCallback OnChanged { get; set; }
+    private bool busy;
+    private string? error;
+
+    private async Task ChangeAsync()
+    {
+        if (busy) return;
+        busy = true;
+        error = null;
+        try
+        {
+            if (await Save(!IsArchived)) await OnChanged.InvokeAsync();
+            else error = "This record no longer exists. Return to the list to find an existing record.";
+        }
+        catch (System.ComponentModel.DataAnnotations.ValidationException ex) { error = ex.Message; }
+        catch (Exception ex) when (ex is Microsoft.Data.Sqlite.SqliteException or Microsoft.EntityFrameworkCore.DbUpdateException or IOException or UnauthorizedAccessException)
+        {
+            Logger.LogError(ex, "Could not change archive state for {Subject}.", Subject);
+            error = "The change could not be saved. Try again when the database is available.";
+        }
+        finally { busy = false; }
+    }
+}

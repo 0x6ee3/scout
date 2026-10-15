@@ -1,0 +1,19 @@
+@inherits LayoutComponentBase
+
+<div class="app-shell">
+    <header class="app-header">
+        <a class="brand" href="/companies"><span class="brand-mark" aria-hidden="true">S</span> Scout</a>
+        <nav aria-label="Main navigation"><NavLink href="/companies">Companies</NavLink><NavLink href="/positions">Positions</NavLink><NavLink href="/applications">Applications</NavLink><NavLink href="/next-actions">Next actions</NavLink><NavLink href="/documents">Documents</NavLink><NavLink href="/cvs">CVs</NavLink><NavLink href="/questions">Employer questions</NavLink><NavLink href="/experiences">STAR experiences</NavLink></nav>
+        <span class="local-label">Personal · Local</span>
+    </header>
+    <main id="main-content">@Body</main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    Scout lost its connection or encountered an error. Unsaved changes may need to be entered again.
+    <a href="" class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+
+

@@ -1,0 +1,22 @@
+<script type="module" src="@Assets["Components/Layout/ReconnectModal.razor.js"]"></script>
+
+<dialog id="components-reconnect-modal" aria-labelledby="scout-connection-title" data-nosnippet>
+    <div class="components-reconnect-container">
+        <h2 id="scout-connection-title" class="components-offline-visible">Scout is offline</h2>
+        <p class="components-offline-visible">
+            Start Scout again to continue.
+        </p>
+        <button id="components-reconnect-button" class="components-reconnect-failed-visible">
+            Reconnect
+        </button>
+        <p class="components-pause-visible">
+            The session has been paused by the server.
+        </p>
+        <p class="components-resume-failed-visible">
+            Failed to resume the session.<br />Please retry or reload the page.
+        </p>
+        <button id="components-resume-button" class="components-pause-visible components-resume-failed-visible">
+            Resume
+        </button>
+    </div>
+</dialog>

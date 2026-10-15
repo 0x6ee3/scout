@@ -1,0 +1,14 @@
+<div class="field"><label for="@Id">@Label · @TimeZoneInfo.Local.DisplayName</label><InputDate id="@Id" Type="InputDateType.DateTimeLocal" Value="Value" ValueChanged="ValueChanged" ValueExpression="ValueExpression" /></div>
+@if (Value.HasValue && TimeZoneInfo.Local.IsAmbiguousTime(DateTime.SpecifyKind(Value.Value, DateTimeKind.Unspecified)))
+{
+    <div class="field"><label for="@(Id + "-offset")">This time occurs twice: choose UTC offset</label><select id="@(Id + "-offset")" value="@OffsetMinutes" @onchange="e => OffsetMinutesChanged.InvokeAsync(int.TryParse(e.Value?.ToString(), out var n) ? n : null)"><option value="">Choose occurrence</option>@foreach (var offset in TimeZoneInfo.Local.GetAmbiguousTimeOffsets(DateTime.SpecifyKind(Value.Value, DateTimeKind.Unspecified))) { <option value="@((int)offset.TotalMinutes)">UTC @offset</option> }</select></div>
+}
+@code {
+    [Parameter] public string Id { get; set; } = "local-time";
+    [Parameter] public string Label { get; set; } = "Time (if known)";
+    [Parameter] public DateTime? Value { get; set; }
+    [Parameter] public EventCallback<DateTime?> ValueChanged { get; set; }
+    [Parameter] public System.Linq.Expressions.Expression<Func<DateTime?>>? ValueExpression { get; set; }
+    [Parameter] public int? OffsetMinutes { get; set; }
+    [Parameter] public EventCallback<int?> OffsetMinutesChanged { get; set; }
+}

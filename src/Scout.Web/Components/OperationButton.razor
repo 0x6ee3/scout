@@ -1,0 +1,8 @@
+@using System.ComponentModel.DataAnnotations
+@inject ILogger<OperationButton> Logger
+<button type="button" disabled="@busy" @onclick="RunAsync">@(busy?"Saving…":Label)</button>@if(error is not null){<p class="message error" role="alert">@error</p>}
+@code {
+    [Parameter]public string Label{get;set;}="Save";[Parameter,EditorRequired]public Func<Task<bool>> Save{get;set;}=default!;[Parameter]public EventCallback OnChanged{get;set;}
+    private bool busy;private string? error;
+    private async Task RunAsync(){if(busy)return;busy=true;error=null;try{if(await Save())await OnChanged.InvokeAsync();else error="The record no longer exists.";}catch(ValidationException ex){error=ex.Message;}catch(Exception ex)when(ex is Microsoft.EntityFrameworkCore.DbUpdateException or Microsoft.Data.Sqlite.SqliteException or IOException or UnauthorizedAccessException){Logger.LogError(ex,"Could not save action.");error="The change could not be saved. Try again; saved data is preserved.";}finally{busy=false;}}
+}

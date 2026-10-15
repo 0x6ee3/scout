@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Scout.Web/Scout.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Scout.Web.Tests/Scout.Web.Tests.csproj" />
+  </Folder>
+</Solution>

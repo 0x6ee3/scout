@@ -1,0 +1,4 @@
+@using Scout.Web.Features.Submissions
+@inject SubmissionOperations Submissions
+<section class="card details-card company-section"><h2>Submission history</h2><a href="@($"/applications/{ApplicationId}/submissions/new")">Record externally sent submission</a>@if(rows.Count==0){<p>No submissions recorded. Application status alone does not establish that files were sent.</p>}@foreach(var s in rows){<p><a href="@($"/submissions/{s.Id}")">@s.SubmittedOn.ToString("d") · Submission #@s.Id</a> @(s.IsIncorrect?"· Marked incorrect":"")</p>}</section>
+@code{[Parameter]public int ApplicationId{get;set;}private IReadOnlyList<ApplicationSubmission> rows=[];protected override async Task OnParametersSetAsync()=>rows=await Submissions.ListAsync(ApplicationId);}

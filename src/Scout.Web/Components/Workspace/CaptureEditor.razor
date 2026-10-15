@@ -1,0 +1,41 @@
+@using Scout.Web.Features.InterviewWorkspace
+@implements IAsyncDisposable
+@inject WorkspaceOperations Operations
+@inject IJSRuntime JS
+<div class="capture-editor" @ref="element">
+<fieldset disabled><legend>@Label</legend>
+@if(QuestionId.HasValue){<label><input data-field="asked" type="checkbox" checked="@initialAsked" /> Asked</label><label><input data-field="follow" type="checkbox" checked="@initialFollow" /> Follow-up required</label>}
+@if(TextEnabled){<label for="@EditorId">@Label</label><textarea id="@EditorId" data-field="text" maxlength="@(Creation ? 4000 : 100000)" readonly="@ReadOnly">@initialText</textarea>}
+@if(!ReadOnly){<button type="button" data-action="save">@(Creation ? "Add question" : "Save now")</button><button type="button" data-action="copy">Copy draft</button>}
+</fieldset>
+<p role="status" data-save-status>@(ReadOnly ? "Read only" : "Preparing browser draft recovery…")</p>
+<div data-recovery></div>
+</div>
+@code {
+    [Parameter] public Guid WorkspaceId {get;set;} [Parameter] public int RoundId {get;set;} [Parameter] public int ConfigurationRevision {get;set;} [Parameter] public int? QuestionId {get;set;}
+    [Parameter] public int Revision {get;set;} [Parameter] public string? Text {get;set;} [Parameter] public bool TextEnabled {get;set;}=true;
+    [Parameter] public bool Asked {get;set;} [Parameter] public bool FollowUp {get;set;} [Parameter] public bool ReadOnly {get;set;} [Parameter] public bool Creation {get;set;}
+    [Parameter] public string Label {get;set;}="Answer / quick notes"; [Parameter] public EventCallback OnCreated {get;set;}
+    private string EditorId=>Creation?"ad-hoc":QuestionId.HasValue?$"answer-{QuestionId}":"interview-notes";
+    private string? initialText;private bool initialAsked,initialFollow;
+    protected override void OnInitialized(){initialText=Text;initialAsked=Asked;initialFollow=FollowUp;}
+    private ElementReference element; private IJSObjectReference? module; private DotNetObjectReference<CaptureEditor>? self;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(!firstRender)return;try{module=await JS.InvokeAsync<IJSObjectReference>("import","./js/workspace-drafts.js");self=DotNetObjectReference.Create(this);await module.InvokeVoidAsync("registerEditor",element,self,new{workspace=WorkspaceId.ToString(),round=RoundId,configuration=ConfigurationRevision,target=Creation?"ad-hoc":QuestionId.HasValue?$"question-{QuestionId}":"notes",revision=Revision,textEnabled=TextEnabled,readOnly=ReadOnly,creation=Creation});}catch(JSDisconnectedException){}catch(JSException){ }
+    }
+    public sealed record NativePayload(string? Text,bool Asked,bool Follow,Guid? CreationToken);
+    [JSInvokable] public async Task<CaptureResult> SaveDraft(int revision,NativePayload payload)
+    {
+        try
+        {
+            if(Creation){var id=await Operations.AddQuestionAsync(RoundId,ConfigurationRevision,payload.CreationToken ?? Guid.Empty,payload.Text ?? "");return new(true,false,0,null,CreatedId:id);}
+            return QuestionId.HasValue?await Operations.SaveQuestionAsync(RoundId,ConfigurationRevision,QuestionId.Value,new(revision,payload.Asked,payload.Follow,TextEnabled,payload.Text)):await Operations.SaveNotesAsync(RoundId,ConfigurationRevision,revision,payload.Text);
+        }
+        catch(System.ComponentModel.DataAnnotations.ValidationException){return new(false,false,revision,null,ReviewRequired:true);}
+        catch(DbUpdateConcurrencyException){return new(false,false,revision,null);}
+        catch(Exception ex)when(ex is DbUpdateException or Microsoft.Data.Sqlite.SqliteException or IOException or UnauthorizedAccessException){return new(false,false,revision,null);}
+    }
+    [JSInvokable] public async Task Created()=>await OnCreated.InvokeAsync();
+    public async ValueTask DisposeAsync(){if(module is not null){try{await module.InvokeVoidAsync("disposeEditor",element);await module.DisposeAsync();}catch(JSDisconnectedException){}catch(JSException){}}self?.Dispose();}
+}

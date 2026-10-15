@@ -1,0 +1,9 @@
+<p class="plain-text">@(Experience.MemoryCue ?? "No memory cue added")</p>
+<details><summary>Expand STAR and notes</summary>
+<dl>
+@foreach(var field in Fields) { <dt>@field.Label</dt><dd class="plain-text">@(field.Text ?? "Not added")</dd> }
+</dl></details>
+@code {
+    [Parameter, EditorRequired] public ProfessionalExperience Experience { get; set; } = default!;
+    private (string Label, string? Text)[] Fields => [("Situation", Experience.Situation), ("Task", Experience.Task), ("Action", Experience.Action), ("Result", Experience.Result), ("Reflection", Experience.Reflection), ("Useful for / likely prompts", Experience.UsefulFor), ("Private library notes", Experience.Notes)];
+}

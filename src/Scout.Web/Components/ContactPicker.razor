@@ -1,0 +1,16 @@
+@using Scout.Web.Features.Contacts
+<fieldset><legend>@Label</legend>
+@if (Contacts.Count == 0) { <p>No contacts available.</p> }
+@foreach (var c in Contacts.Where(c => !c.IsArchived || Selected.Contains(c.Id)))
+{
+    <label class="checkbox-label"><input type="checkbox" checked="@Selected.Contains(c.Id)" @onchange="e => Change(c.Id, (bool)e.Value!)" /> @c.Name @(c.IsArchived ? "(archived)" : "") · @c.Role</label>
+}
+</fieldset>
+@code {
+    [Parameter] public string Label { get; set; } = "Contacts (optional)";
+    [Parameter] public IReadOnlyList<ContactListItem> Contacts { get; set; } = [];
+    [Parameter] public HashSet<int> Selected { get; set; } = [];
+    [CascadingParameter] public EditContext? Context { get; set; }
+    [Parameter] public object? Model { get; set; }
+    private void Change(int id, bool selected) { if (selected) Selected.Add(id); else Selected.Remove(id); if (Context is not null && Model is not null) Context.NotifyFieldChanged(new(Model, "ContactIds")); }
+}

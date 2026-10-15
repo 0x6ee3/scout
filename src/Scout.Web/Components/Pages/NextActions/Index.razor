@@ -1,0 +1,25 @@
+@page "/next-actions"
+@using Scout.Web.Features.NextActions
+@inject NextActionOperations Actions
+@inject Scout.Web.Features.Companies.CompanyOperations Companies
+@inject Scout.Web.Features.Applications.ApplicationOperations Applications
+@inject Scout.Web.Features.Positions.PositionOperations Positions
+@inject NavigationManager Navigation
+<PageTitle>Next actions · Scout</PageTitle><h1>Next actions</h1><a class="button" href="@CatalogLinks.Record("/next-actions/new", Query)">Add action</a>
+<form method="get" action="/next-actions" class="filter-form">
+<label>Search <input name="q" value="@Q" /></label>
+<label>Status <select name="status" value="@(Status ?? "Open")"><option value="All" selected="@(Status=="All")">All</option>@foreach(var s in Enum.GetValues<NextActionStatus>()) {<option value="@s" selected="@((Status??"Open")==s.ToString())">@s</option>}</select></label>
+<label>Due <select name="due" value="@Due">@foreach(var d in Enum.GetValues<DueFilter>()) {<option value="@d" selected="@((CatalogLinks.ParseEnum<DueFilter>(Due)??DueFilter.Any)==d)">@d</option>}</select></label>
+<label>Company <select name="companyId"><option value="">All companies</option>@foreach(var c in companies){<option value="@c.Id" selected="@(CompanyId==c.Id)">@c.Name</option>}</select></label><label>Application <select name="applicationId"><option value="">All applications</option>@foreach(var a in applications){<option value="@a.Id" selected="@(ApplicationId==a.Id)">@a.Title · @(a.AttemptLabel??$"Attempt #{a.Id}")</option>}</select></label><label>Position-owned actions <select name="positionId"><option value="">All owners</option>@foreach(var p in positions){<option value="@p.Id" selected="@(PositionId==p.Id)">@p.Title</option>}</select></label>
+<label>Archive <select name="archive" value="@Archive">@foreach(var v in Enum.GetValues<ArchiveFilter>()) {<option value="@v" selected="@((CatalogLinks.ParseEnum<ArchiveFilter>(Archive)??ArchiveFilter.Active)==v)">@v</option>}</select></label><button>Apply filters</button><a href="/next-actions">Clear</a></form>
+<LoadPanel Load="LoadAsync" LoadKey="@Navigation.Uri">@if(rows.Count==0){<p>No actions match.</p>}@foreach(var a in rows){<article class="card details-card company-section"><h2><a href="@CatalogLinks.Record($"/next-actions/{a.Id}",Query)">@a.Title</a></h2><p>@a.CompanyName · @a.PositionTitle · @a.Status · @(a.DueOn?.ToString("d") ?? "No due date")</p>@if(a.Status==NextActionStatus.Open && a.DueOn<DateOnly.FromDateTime(DateTime.Today)){<span class="badge">Overdue</span>}@if(a.ParentIsArchived){<span class="badge">Archived parent</span>}@if(a.IsArchived){<span class="badge">Archived action</span>}</article>}</LoadPanel>
+@code {
+    [SupplyParameterFromQuery] public string? Q {get;set;} [SupplyParameterFromQuery] public string? Status {get;set;} [SupplyParameterFromQuery] public string? Due {get;set;} [SupplyParameterFromQuery] public string? Archive {get;set;}
+    [SupplyParameterFromQuery] public int? CompanyId {get;set;} [SupplyParameterFromQuery] public int? ApplicationId {get;set;} [SupplyParameterFromQuery] public int? PositionId {get;set;}
+    private string Query=>new Uri(Navigation.Uri).Query; private IReadOnlyList<NextActionListItem> rows=[];
+    private IReadOnlyList<Scout.Web.Features.Companies.CompanyListItem> companies=[];private IReadOnlyList<Scout.Web.Features.Applications.ApplicationListItem> applications=[];private IReadOnlyList<Scout.Web.Features.Positions.PositionListItem> positions=[];
+    private async Task LoadAsync(){companies=await Companies.ListAsync(ArchiveFilter.All);applications=await Applications.ListAsync(archive:ArchiveFilter.All);positions=await Positions.ListAsync(archive:ArchiveFilter.All);rows=await Actions.ListAsync(ApplicationId,PositionId,CompanyId,Status=="All"?null:CatalogLinks.ParseEnum<NextActionStatus>(Status)??NextActionStatus.Open,CatalogLinks.ParseEnum<DueFilter>(Due)??DueFilter.Any,CatalogLinks.ParseEnum<ArchiveFilter>(Archive)??ArchiveFilter.Active,Q);StateHasChanged();}
+}
+
+
+

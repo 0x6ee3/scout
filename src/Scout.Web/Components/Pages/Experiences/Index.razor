@@ -1,0 +1,27 @@
+@page "/experiences"
+@using Scout.Web.Features.Experiences
+@inject ExperienceOperations Experiences
+@inject TagOperations TagOperations
+@inject NavigationManager Navigation
+<PageTitle>STAR experiences · Scout</PageTitle>
+<div class="page-heading"><div><h1>STAR experiences</h1><p>Your reusable personal examples. Partial STAR entries are welcome.</p></div><a class="button" href="@CatalogLinks.Record("/experiences/new", Query)">Add experience</a></div>
+<form method="get" action="/experiences" class="card catalog-filters" role="search">
+<div class="field"><label for="q">Search experiences</label><input id="q" name="q" value="@Search" /></div>
+<div class="field"><label for="tag">Tag</label><select id="tag" name="tag"><option value="">All tags</option>@foreach(var tag in tags) { <option value="@tag" selected="@(Tag == tag)">@tag</option> }</select></div>
+<div class="field"><label for="archive">Show</label><select id="archive" name="archive">@foreach(var a in Enum.GetValues<ArchiveFilter>()) { <option value="@a" selected="@(Filter == a)">@a</option> }</select></div>
+<button type="submit">Search</button><a href="/experiences">Reset</a>
+</form>
+<LoadPanel Load="LoadAsync" LoadKey="@Query">
+@if(items.Count == 0) { <p class="card">@(string.IsNullOrEmpty(Query) ? "No STAR experiences yet. Add your first example." : "No experiences match this view. Reset the filters or add an example.")</p> }
+else { <ul class="card preparation-list">@foreach(var item in items) { <li><a href="@CatalogLinks.Record($"/experiences/{item.Id}", Query)">@item.Title</a><p class="plain-text">@item.MemoryCue</p><TagBadges Values="item.Tags" />@if(item.IsArchived) { <span class="badge">Archived</span> }</li> }</ul> }
+</LoadPanel>
+@code {
+    [SupplyParameterFromQuery(Name="q")] public string? Search { get; set; }
+    [SupplyParameterFromQuery(Name="tag")] public string? Tag { get; set; }
+    [SupplyParameterFromQuery(Name="archive")] public string? Archive { get; set; }
+    private ArchiveFilter Filter => CatalogLinks.ParseEnum<ArchiveFilter>(Archive) ?? ArchiveFilter.Active;
+    private string Query => new Uri(Navigation.Uri).Query;
+    private IReadOnlyList<ExperienceListItem> items = [];
+    private IReadOnlyList<string> tags = [];
+    private async Task LoadAsync() { items = await Experiences.ListAsync(Filter, Search, Tag); tags = await TagOperations.SuggestionsAsync(); StateHasChanged(); }
+}

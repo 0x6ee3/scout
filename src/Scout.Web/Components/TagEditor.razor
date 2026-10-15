@@ -1,0 +1,33 @@
+@inherits InputBase<List<string>>
+@using System.ComponentModel.DataAnnotations
+@inject TagOperations TagOperations
+<div class="field">
+    <label for="@inputId">Tags (optional)</label>
+    <p class="muted">One word or hyphen-separated words, for example team-conflict. Up to 20.</p>
+    <div class="tag-chips">@foreach (var tag in CurrentValue ?? []) { <span class="tag-badge @Tags.Color(tag)">@tag <button type="button" aria-label="Remove tag @tag" @onclick="() => Remove(tag)">×</button></span> }</div>
+    <input id="@inputId" value="@pending" @oninput="Typing" list="@listId" maxlength="50" onkeydown="if(event.key==='Enter')event.preventDefault()" @onkeyup="KeyUp" />
+    <datalist id="@listId">@foreach(var tag in suggestions.Where(x => x.StartsWith(pending.Trim(), StringComparison.OrdinalIgnoreCase) && !(CurrentValue ?? []).Contains(x)).Take(10)) { <option value="@tag"></option> }</datalist>
+    <button type="button" @onclick="Add">Add tag</button>
+    <ValidationMessage For="ValueExpression" />
+</div>
+@code {
+    private readonly string inputId = $"tag-{Guid.NewGuid():N}";
+    private string listId => inputId + "-suggestions";
+    private string pending = "";
+    private IReadOnlyList<string> suggestions = [];
+    private ValidationMessageStore? messages;
+    protected override async Task OnInitializedAsync() { messages = new(EditContext); suggestions = await TagOperations.SuggestionsAsync(); }
+    private void Typing(ChangeEventArgs e) { pending = e.Value?.ToString() ?? ""; messages!.Clear(FieldIdentifier); if (!string.IsNullOrWhiteSpace(pending)) messages.Add(FieldIdentifier, "Add the typed tag or clear it before saving."); EditContext.NotifyFieldChanged(FieldIdentifier); EditContext.NotifyValidationStateChanged(); }
+    private void KeyUp(KeyboardEventArgs e) { if (e.Key == "Enter") Add(); }
+    private void Add()
+    {
+        if (string.IsNullOrWhiteSpace(pending)) return;
+        messages!.Clear(FieldIdentifier);
+        try { CurrentValue = Tags.Normalize((CurrentValue ?? []).Append(pending)); pending = ""; }
+        catch (ValidationException ex) { messages.Add(FieldIdentifier, ex.Message); }
+        EditContext.NotifyValidationStateChanged();
+    }
+    private void Remove(string tag) { CurrentValue = (CurrentValue ?? []).Where(x => x != tag).ToList(); }
+    protected override bool TryParseValueFromString(string? value, out List<string> result, [System.Diagnostics.CodeAnalysis.NotNullWhen(false)] out string? validationErrorMessage) { result = []; validationErrorMessage = null; return true; }
+    protected override void Dispose(bool disposing) { messages?.Clear(); base.Dispose(disposing); }
+}

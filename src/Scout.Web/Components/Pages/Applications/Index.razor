@@ -1,0 +1,32 @@
+@page "/applications"
+@using Scout.Web.Features.Applications
+@inject ApplicationOperations Applications
+@inject Scout.Web.Features.Companies.CompanyOperations Companies
+@inject NavigationManager Navigation
+<PageTitle>Applications · Scout</PageTitle>
+<div class="page-heading"><h1>Applications</h1><a class="button" href="/applications/new">Add application</a></div>
+<LoadPanel Load="LoadAsync" LoadKey="@Navigation.Uri">
+    <form method="get" action="/applications" class="card catalog-filters" role="search">
+        <div class="filter-field"><label for="q">Search applications</label><input id="q" name="q" value="@Q" placeholder="Company, position or attempt label" /></div>
+        <div class="filter-field"><label for="company">Company</label><select id="company" name="companyId"><option value="">All companies</option>@foreach (var c in companies) { <option value="@c.Id" selected="@(CompanyId == c.Id)">@c.Name</option> }</select></div>
+        <div class="filter-field"><label for="status">Status</label><select id="status" name="status"><option value="">All statuses</option>@foreach (var v in Enum.GetValues<ApplicationStatus>()) { <option value="@v" selected="@(Status == v.ToString())">@v</option> }</select></div>
+        <div class="filter-field"><label for="archive">Show</label><select id="archive" name="archive">@foreach (var v in Enum.GetValues<ArchiveFilter>()) { <option value="@v" selected="@(Archive == v.ToString() || Archive is null && v == ArchiveFilter.Active)">@v</option> }</select></div>
+        <div class="form-actions"><button>Search</button><a href="/applications">Reset</a></div>
+    </form>
+    @if (items.Count == 0) { <div class="card empty-state"><h2>No applications in this view</h2><p>Reset the filters or add an application for an active position.</p><a href="/applications/new">Add application</a></div> }
+    else { <ul class="card company-list">@foreach (var a in items) { <li><a href="@CatalogLinks.Record($"/applications/{a.Id}", new Uri(Navigation.Uri).Query)"><div>@a.Title<small>@a.CompanyName · @(a.AttemptLabel ?? $"Attempt #{a.Id}")</small>@if (a.IsArchived) { <span class="badge">Archived application</span> } @if (a.CompanyIsArchived || a.PositionIsArchived) { <span class="badge">Archived parent</span> }</div><span>@a.Status</span></a></li> }</ul> }
+</LoadPanel>
+@code {
+    [SupplyParameterFromQuery] public string? Q { get; set; }
+    [SupplyParameterFromQuery] public string? Status { get; set; }
+    [SupplyParameterFromQuery] public string? Archive { get; set; }
+    [SupplyParameterFromQuery] public int? CompanyId { get; set; }
+    private IReadOnlyList<ApplicationListItem> items = [];
+    private IReadOnlyList<Scout.Web.Features.Companies.CompanyListItem> companies = [];
+    private async Task LoadAsync()
+    {
+        companies = await Companies.ListAsync(ArchiveFilter.All);
+        items = await Applications.ListAsync(companyId: CompanyId, archive: CatalogLinks.ParseEnum<ArchiveFilter>(Archive) ?? ArchiveFilter.Active, status: CatalogLinks.ParseEnum<ApplicationStatus>(Status), search: Q);
+    }
+}
+

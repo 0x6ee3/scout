@@ -1,0 +1,6 @@
+<div class="field"><label for="file">@Label</label><InputFile id="file" OnChange="Changed" accept="@Accept" /></div><p>One file, up to 50 MiB. Scout keeps an independent copy.</p>
+@code {
+    [Parameter]public string Label{get;set;}="File (required)";[Parameter]public string Accept{get;set;}=".pdf,.txt,.md,.eml,.msg,.mp3,.wav,.m4a";[Parameter]public EventCallback<IBrowserFile> Selected{get;set;}
+    [CascadingParameter]public EditContext Context{get;set;}=default!;
+    private async Task Changed(InputFileChangeEventArgs e){Context.NotifyFieldChanged(new(Context.Model,"SelectedFile"));await Selected.InvokeAsync(e.File);}
+}

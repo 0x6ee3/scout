@@ -1,0 +1,191 @@
+@page "/companies/new"
+@page "/companies/{Id:int}/edit"
+@using System.ComponentModel.DataAnnotations
+@using Scout.Web.Features.Companies
+@inject CompanyOperations Companies
+@inject NavigationManager Navigation
+@inject ILogger<Editor> Logger
+
+<PageTitle>@(Id.HasValue ? "Edit company" : "Add company") · Scout</PageTitle>
+<a class="back-link" href="@CancelUrl">← @(Id.HasValue ? "Company details" : "Companies")</a>
+
+@if (loading)
+{
+    <h1>Company</h1><p role="status">Loading company…</p>
+}
+else if (loadFailed)
+{
+    <h1>Company unavailable</h1>
+    <div class="message error" role="alert">The company could not be loaded. Your saved data has not been changed.</div>
+    <button @onclick="LoadAsync">Try again</button>
+}
+else if (notFound)
+{
+    <h1>Company not found</h1>
+    <p>There is no company with this address. <a href="/companies">Return to the company list</a> to find an existing record.</p>
+}
+else
+{
+    <div class="page-heading"><div><p class="eyebrow">Company details</p><h1>@(Id.HasValue ? "Edit company" : "Add company")</h1><p class="muted">A name is all you need. Add other information when it’s useful.</p></div></div>
+    <section class="card form-card">
+        <EditForm EditContext="editContext" OnValidSubmit="SaveAsync" FormName="CompanyEditor">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            @if (error is not null)
+            {
+                <div class="message error" role="alert">@error</div>
+            }
+            <fieldset disabled="@saving">
+                <legend class="visually-hidden">Company information</legend>
+                <div class="field">
+                    <label for="company-name">Company name <span class="muted">(required)</span></label>
+                    <InputText id="company-name" @bind-Value="model.Name" maxlength="200" autocomplete="organization" disabled="@saving" aria-describedby="name-hint" />
+                    <p id="name-hint" class="field-hint">Use the name you want to see in your company list.</p>
+                    <ValidationMessage For="() => model.Name" />
+                </div>
+                <div class="field">
+                    <label for="company-website">Website</label>
+                    <InputText id="company-website" @bind-Value="model.WebsiteUrl" maxlength="2048" type="text" inputmode="url" aria-describedby="website-hint" />
+                    <p id="website-hint" class="field-hint">A complete http:// or https:// address. Scout opens it only when you choose the link.</p>
+                    <ValidationMessage For="() => model.WebsiteUrl" />
+                </div>
+                <div class="field">
+                    <label for="company-location">Location</label>
+                    <InputText id="company-location" @bind-Value="model.Location" maxlength="300" />
+                    <ValidationMessage For="() => model.Location" />
+                </div>
+                <div class="field">
+                    <label for="company-description">Reference description</label>
+                    <InputTextArea id="company-description" @bind-Value="model.Description" maxlength="100000" rows="6" aria-describedby="description-hint" />
+                    <p id="description-hint" class="field-hint">Factual or reference information about the company. Up to 100,000 characters.</p>
+                    <ValidationMessage For="() => model.Description" />
+                </div>
+                <div class="field">
+                    <label for="company-notes">Personal notes</label>
+                    <InputTextArea id="company-notes" @bind-Value="model.PersonalNotes" maxlength="100000" rows="6" aria-describedby="notes-hint" />
+                    <p id="notes-hint" class="field-hint">Your impressions, assessments, and questions. Up to 100,000 characters.</p>
+                    <ValidationMessage For="() => model.PersonalNotes" />
+                </div>
+                <div class="form-actions">
+                    <button type="submit" disabled="@saving">@(saving ? "Saving…" : "Save company")</button>
+                    <a href="@CancelUrl">Cancel</a>
+                </div>
+            </fieldset>
+        </EditForm>
+    </section>
+    <NavigationLock ConfirmExternalNavigation="@(saving || editContext.IsModified())" OnBeforeInternalNavigation="BeforeNavigation" />
+
+    @if (pendingNavigation is not null)
+    {
+        <div class="message" role="alert">
+            <p>You have unsaved company details. Leave without saving?</p>
+            <button type="button" class="secondary" @onclick="Leave">Leave without saving</button>
+            <button type="button" @onclick="() => pendingNavigation = null">Keep editing</button>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+    [SupplyParameterFromQuery] public string? ListQuery { get; set; }
+    private CompanyEditModel model = new();
+    private EditContext editContext = default!;
+    private bool loading;
+    private bool loadFailed;
+    private bool notFound;
+    private bool saving;
+    private string? error;
+    private string? pendingNavigation;
+
+    private string CancelUrl => Id.HasValue ? CatalogLinks.Record($"/companies/{Id}", ListQuery) : CatalogLinks.List("/companies", ListQuery);
+
+    protected override Task OnParametersSetAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        loadFailed = false;
+        notFound = false;
+        error = null;
+        pendingNavigation = null;
+        try
+        {
+            model = new CompanyEditModel();
+            if (Id.HasValue)
+            {
+                var company = await Companies.GetAsync(Id.Value);
+                notFound = company is null;
+                if (company is not null)
+                {
+                    model = new CompanyEditModel
+                    {
+                        Name = company.Name,
+                        WebsiteUrl = company.WebsiteUrl,
+                        Location = company.Location,
+                        Description = company.Description,
+                        PersonalNotes = company.PersonalNotes
+                    };
+                }
+            }
+            editContext = new EditContext(model);
+        }
+        catch (Exception exception) when (exception is Microsoft.EntityFrameworkCore.DbUpdateException or Microsoft.Data.Sqlite.SqliteException)
+        {
+            Logger.LogError(exception, "Could not load company {CompanyId} for editing.", Id);
+            loadFailed = true;
+        }
+        finally { loading = false; }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (saving) return;
+        saving = true;
+        error = null;
+        try
+        {
+            var id = Id;
+            if (id.HasValue)
+            {
+                if (!await Companies.UpdateAsync(id.Value, model))
+                {
+                    error = "This company no longer exists. Your entered details are still here; return to the company list to find an existing record.";
+                    return;
+                }
+            }
+            else { id = await Companies.CreateAsync(model); }
+            editContext.MarkAsUnmodified();
+            saving = false;
+            Navigation.NavigateTo(CatalogLinks.Record($"/companies/{id}", ListQuery));
+        }
+        catch (ValidationException exception) { error = exception.Message; }
+        catch (Exception exception) when (exception is Microsoft.EntityFrameworkCore.DbUpdateException or Microsoft.Data.Sqlite.SqliteException)
+        {
+            Logger.LogError(exception, "Could not save a company.");
+            error = "The company could not be saved. Your entered details are still here. Check that Scout can access its database, then try again.";
+        }
+        finally { saving = false; }
+    }
+
+    private void BeforeNavigation(LocationChangingContext context)
+    {
+        if (saving)
+        {
+            context.PreventNavigation();
+            return;
+        }
+        if (editContext.IsModified())
+        {
+            context.PreventNavigation();
+            pendingNavigation = context.TargetLocation;
+        }
+    }
+
+    private void Leave()
+    {
+        var destination = pendingNavigation!;
+        pendingNavigation = null;
+        editContext.MarkAsUnmodified();
+        Navigation.NavigateTo(destination);
+    }
+}

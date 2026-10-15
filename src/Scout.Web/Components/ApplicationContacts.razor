@@ -1,0 +1,15 @@
+@using Scout.Web.Features.Contacts
+@inject ContactOperations Contacts
+<section class="card details-card company-section"><h2>Contacts</h2><a href="@($"/contacts?companyId={CompanyId}")">Company contacts</a> · <a href="@($"/contacts/new?companyId={CompanyId}")">Add contact</a>
+@foreach (var c in related) { <p><a href="@($"/contacts/{c.Id}")">@c.Name</a> · @c.Origin @(c.IsArchived ? "· Archived" : "")</p> }
+<DraftForm Model="@draft" Save="SaveAsync" CancelUrl="@($"/applications/{ApplicationId}")" SaveLabel="Save application contacts" FormName="ApplicationContacts"><ContactPicker Contacts="options" Selected="draft.ContactIds" Model="@draft" Label="Explicit application contacts" /></DraftForm>
+</section>
+@code {
+    [Parameter] public int ApplicationId { get; set; } [Parameter] public int CompanyId { get; set; }
+    private sealed class Selection { public HashSet<int> ContactIds { get; set; } = []; }
+    private Selection draft = new(); private IReadOnlyList<ContactListItem> options = []; private IReadOnlyList<RelatedContact> related = [];
+    private int? loadedId;
+    protected override async Task OnParametersSetAsync() { if(loadedId==ApplicationId)return; options = await Contacts.ListAsync(CompanyId, ArchiveFilter.All); draft = new() { ContactIds = await Contacts.ApplicationSelectionAsync(ApplicationId) }; related = await Contacts.RelatedAsync(ApplicationId); loadedId=ApplicationId; }
+    private async Task<string> SaveAsync() { await Contacts.SaveApplicationContactsAsync(ApplicationId, draft.ContactIds); related = await Contacts.RelatedAsync(ApplicationId); StateHasChanged(); return $"/applications/{ApplicationId}"; }
+}
+

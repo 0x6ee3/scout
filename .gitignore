@@ -1,0 +1,12 @@
+.local/
+**/bin/
+**/obj/
+.vs/
+TestResults/
+*.user
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.log
+appsettings.Local.json

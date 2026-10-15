@@ -1,0 +1,32 @@
+@page "/next-actions/new"
+@page "/next-actions/{Id:int}/edit"
+@using Scout.Web.Features.NextActions
+@using Scout.Web.Features.Applications
+@using Scout.Web.Features.Positions
+@using Scout.Web.Features.Interviews
+@using Scout.Web.Features.Timeline
+@inject NextActionOperations Actions
+@inject ApplicationOperations Applications
+@inject PositionOperations Positions
+@inject InterviewOperations Interviews
+@inject TimelineOperations Timeline
+<PageTitle>Next action · Scout</PageTitle><h1>@(Id.HasValue?"Edit action":"Add action")</h1>
+<LoadPanel Load="LoadAsync" LoadKey="@($"{Id}/{ApplicationId}/{PositionId}")">@if(missing){<p>Action not found.</p>}else{<DraftForm Model="@model" Save="SaveAsync" CancelUrl="@Back" SaveLabel="Save action" FormName="NextActionEditor">
+@if(Id.HasValue){<p>Owner: @(model.ApplicationId.HasValue?$"Application #{model.ApplicationId}":$"Position #{model.PositionId}"). Ownership stays fixed.</p>}else{
+<div class="field"><label for="owner-kind">Action owner</label><select id="owner-kind" @bind="owner" @bind:after="OwnerChanged"><option value="Application">Application</option><option value="Position">Position before applying</option></select></div>
+@if(owner=="Application"){<div class="field"><label for="application">Application (required)</label><InputSelect id="application" @bind-Value="model.ApplicationId" @bind-Value:after="LoadScopeAsync"><option value="">Choose application</option>@foreach(var a in apps){<option value="@a.Id">@a.CompanyName · @a.Title · @(a.AttemptLabel??$"Attempt #{a.Id}")</option>}</InputSelect></div>}else{<div class="field"><label for="position">Position (required)</label><InputSelect id="position" @bind-Value="model.PositionId"><option value="">Choose position</option>@foreach(var p in positions){<option value="@p.Id">@p.CompanyName · @p.Title</option>}</InputSelect></div>}}
+<div class="field"><label for="title">Title (required)</label><InputText id="title" @bind-Value="model.Title" maxlength="200" /></div><div class="field"><label for="description">Description</label><InputTextArea id="description" @bind-Value="model.Description" maxlength="100000" /></div><div class="field"><label for="due">Due date</label><InputDate id="due" @bind-Value="model.DueOn" /></div>
+@if(model.ApplicationId.HasValue){<p>Optional context: choose one interview or one event.</p><div class="field"><label for="round">Interview</label><InputSelect id="round" @bind-Value="model.InterviewRoundId"><option value="">None</option>@foreach(var r in rounds){<option value="@r.Id">@r.Title @(r.IsArchived?"(archived)":"")</option>}</InputSelect></div><div class="field"><label for="event">Timeline event</label><InputSelect id="event" @bind-Value="model.TimelineEventId"><option value="">None</option>@foreach(var e in events){<option value="@e.Id">@e.EventDate · @e.Kind #@e.Id @(e.IsArchived?"(archived)":"")</option>}</InputSelect></div>}
+</DraftForm>}</LoadPanel>
+@code {
+    [Parameter] public int? Id{get;set;} [SupplyParameterFromQuery] public int? ApplicationId{get;set;} [SupplyParameterFromQuery] public int? InterviewRoundId{get;set;} [SupplyParameterFromQuery] public int? TimelineEventId{get;set;} [SupplyParameterFromQuery] public int? PositionId{get;set;} [SupplyParameterFromQuery] public string? ListQuery{get;set;}
+    private NextActionEditModel model=new();private bool missing;private string owner="Application";
+    private IReadOnlyList<ApplicationListItem> apps=[];private IReadOnlyList<PositionListItem> positions=[];private IReadOnlyList<InterviewListItem> rounds=[];private IReadOnlyList<ApplicationTimelineEvent> events=[];
+    private string Back=>Id.HasValue?CatalogLinks.Record($"/next-actions/{Id}",ListQuery):CatalogLinks.List("/next-actions",ListQuery);
+    private async Task LoadAsync(){missing=false;if(Id.HasValue){var a=await Actions.GetAsync(Id.Value);missing=a is null;if(a is null)return;model=new(){ApplicationId=a.ApplicationId,PositionId=a.PositionId,InterviewRoundId=a.InterviewRoundId,TimelineEventId=a.TimelineEventId,Title=a.Title,Description=a.Description,DueOn=a.DueOn};}else{model=new(){ApplicationId=ApplicationId,PositionId=PositionId,InterviewRoundId=InterviewRoundId,TimelineEventId=TimelineEventId};owner=PositionId.HasValue?"Position":"Application";apps=await Applications.ListAsync();positions=await Positions.ListAsync();}await LoadScopeAsync();}
+    private async Task OwnerChanged(){model.ApplicationId=model.PositionId=model.InterviewRoundId=model.TimelineEventId=null;await LoadScopeAsync();}
+    private async Task LoadScopeAsync(){rounds=model.ApplicationId.HasValue?await Interviews.ListAsync(model.ApplicationId.Value,ArchiveFilter.All):[];events=model.ApplicationId.HasValue?await Timeline.ListAsync(model.ApplicationId.Value,ArchiveFilter.All):[];}
+    private async Task<string> SaveAsync()=>CatalogLinks.Record($"/next-actions/{await Actions.SaveAsync(Id,model)}",ListQuery);
+}
+
+

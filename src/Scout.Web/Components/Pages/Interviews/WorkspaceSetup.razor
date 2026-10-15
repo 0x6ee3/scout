@@ -1,0 +1,35 @@
+@page "/interviews/{Id:int}/workspace/setup"
+@using Scout.Web.Features.InterviewWorkspace
+@using Scout.Web.Components.Workspace
+@inject WorkspaceOperations Operations
+<PageTitle>Private Workspace review · Scout</PageTitle>
+<h1>Review Interview Workspace</h1>
+<p class="message">Private page. Each review starts with no fields selected and replaces the previous approval. Close old Workspace tabs before changing visibility. Only selected fields will appear in the shared Workspace. Live answer/note fields remain visible as they are edited later.</p>
+<LoadPanel Load="LoadAsync" LoadKey="@Id.ToString()">
+@if(data is null){<p>Interview not found.</p>}else{
+<p><a href="@($"/interviews/{Id}")">Back to interview</a></p>
+<DraftForm Model="input" Save="ApproveAsync" SaveLabel="Approve selected content" CancelUrl="@($"/interviews/{Id}")" FormName="WorkspaceReview">
+<label><InputCheckbox @bind-Value="input.RoundDetails" /> Round/company/position and schedule</label><p>@data.Round.Title · @data.CompanyName · @data.Round.Application.Position.Title · @data.Round.ScheduledAtUtc?.ToLocalTime().ToString("g")</p>
+<label><InputCheckbox @bind-Value="input.JobDescription" /> Job description</label><p class="plain-text">@data.Round.Application.Position.JobDescriptionSnapshot</p>
+<label for="workspace-cv">Submitted CV (review its file before inclusion)</label><InputSelect id="workspace-cv" @bind-Value="input.CvKey"><option value="">None</option>@foreach(var cv in data.Cvs){<option value="@cv.Key">@cv.SubmittedOn · @cv.Label</option>}</InputSelect>
+@foreach(var cv in data.Cvs){<p><a href="@($"/documents/{cv.Key.Split('/')[1]}/view")" target="_blank" rel="noopener noreferrer">Review @cv.Label (@cv.SubmittedOn)</a></p>}
+<label><InputCheckbox @bind-Value="input.InterviewNotes" /> Live interview notes (editable and visible after approval)</label><p class="plain-text">@data.Round.InterviewNotes</p>
+<label><InputCheckbox @bind-Value="input.PreparationNotes" /> Read-only preparation notes copy</label><p class="plain-text">@data.Round.PreparationNotes</p>
+<h2>Prepared questions</h2>
+@foreach(var choice in input.Questions){var q=data.Questions.Single(x=>x.Id==choice.Id);<section class="card"><label><InputCheckbox @bind-Value="choice.Include" /> @q.Text</label><TagBadges Values="@(q.EmployerQuestion?.Tags.Select(x=>x.Tag) ?? [])" /><label><InputCheckbox @bind-Value="choice.Intent" /> Intent</label><p class="plain-text">@q.Intent</p><label><InputCheckbox @bind-Value="choice.FollowUps" /> Suggested follow-ups</label><p class="plain-text">@q.FollowUpQuestions</p><label><InputCheckbox @bind-Value="choice.PreparationNotes" /> Preparation notes copy</label><p class="plain-text">@q.PreparationNotes</p><label><InputCheckbox @bind-Value="choice.Answer" /> Live answer editor (current and subsequent text visible)</label><p class="plain-text">@q.Answer</p></section>}
+<h2>Selected STAR experiences</h2>
+@foreach(var choice in input.Experiences){var e=data.Experiences.Single(x=>x.Id==choice.Id);var story=e.ProfessionalExperience;<section class="card"><label><InputCheckbox @bind-Value="choice.Include" /> @story.Title</label><TagBadges Values="@story.Tags.Select(x=>x.Tag)" /><label><InputCheckbox @bind-Value="choice.Cue" /> Memory cue</label><p class="plain-text">@story.MemoryCue</p><label><InputCheckbox @bind-Value="choice.Situation" /> Situation</label><p class="plain-text">@story.Situation</p><label><InputCheckbox @bind-Value="choice.Task" /> Task</label><p class="plain-text">@story.Task</p><label><InputCheckbox @bind-Value="choice.Action" /> Action</label><p class="plain-text">@story.Action</p><label><InputCheckbox @bind-Value="choice.Result" /> Result</label><p class="plain-text">@story.Result</p><label><InputCheckbox @bind-Value="choice.Reflection" /> Reflection</label><p class="plain-text">@story.Reflection</p><label><InputCheckbox @bind-Value="choice.UsefulFor" /> Likely prompts</label><p class="plain-text">@story.UsefulFor</p><label><InputCheckbox @bind-Value="choice.Notes" /> Library notes</label><p class="plain-text">@story.Notes</p><label><InputCheckbox @bind-Value="choice.PreparationNotes" /> Rehearsal notes</label><p class="plain-text">@e.PreparationNotes</p></section>}
+<h2>Prior answers (other rounds of this application)</h2>
+@foreach(var prior in data.PriorAnswers){<label><input type="checkbox" checked="@input.PriorAnswerIds.Contains(prior.Id)" @onchange="e => SelectPrior(prior.Id, (bool)e.Value!)" /> @prior.RoundTitle · @prior.Text</label><p class="plain-text">@prior.Answer</p>}
+</DraftForm>
+@if(data.WorkspaceId.HasValue){<PrivateDraftRecovery WorkspaceId="data.WorkspaceId.Value" RoundId="Id" />}
+@if(approved){<p role="status">Content approved.</p><a class="button" href="@($"/interviews/{Id}/workspace")" target="_blank" rel="noopener noreferrer">Open Interview Workspace</a>}
+}
+</LoadPanel>
+@code {
+    [Parameter] public int Id { get; set; }
+    private WorkspaceSetupData? data; private WorkspaceApproval input = new(); private bool approved;
+    private async Task LoadAsync(){data=await Operations.SetupAsync(Id);input=new(){ExpectedRevision=data?.Revision ?? 0, ExpectedReviewStamp=data?.ReviewStamp ?? "", Questions=data?.Questions.Select(x=>new QuestionApproval{Id=x.Id}).ToList() ?? [], Experiences=data?.Experiences.Select(x=>new ExperienceApproval{Id=x.Id}).ToList() ?? []};approved=false;StateHasChanged();}
+    private async Task<string> ApproveAsync(){await Operations.ApproveAsync(Id,input);input.ExpectedRevision++;approved=true;StateHasChanged();return "";}
+    private void SelectPrior(int id,bool selected){if(selected)input.PriorAnswerIds.Add(id);else input.PriorAnswerIds.Remove(id);}
+}

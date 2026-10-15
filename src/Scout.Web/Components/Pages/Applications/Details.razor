@@ -1,0 +1,35 @@
+@page "/applications/{Id:int}"
+@using Scout.Web.Features.Applications
+@inject ApplicationOperations Applications
+@inject IDbContextFactory<Scout.Web.Data.ScoutDbContext> Factory
+<PageTitle>Application · Scout</PageTitle>
+<a class="back-link" href="@CatalogLinks.List("/applications", ListQuery)">← Applications</a>
+<LoadPanel Load="LoadAsync" LoadKey="@Id.ToString()">
+    @if (application is null) { <h1>Application not found</h1> }
+    else
+    {
+        <div class="page-heading"><div><p class="eyebrow">Application #@Id · @application.Status</p><h1>@application.Position.Title</h1><p><a href="@($"/companies/{application.Position.CompanyId}")">@application.Position.Company.Name</a> · <a href="@($"/positions/{application.PositionId}")">Position details</a></p></div><a class="button" href="@CatalogLinks.Record($"/applications/{Id}/edit", ListQuery)">Edit application</a></div>
+        @if (application.IsArchived) { <p class="badge">Archived application</p> }
+        @if (application.Position.IsArchived || application.Position.Company.IsArchived) { <p class="badge">Archived parent</p> }
+        <section class="card details-card company-section"><h2>Application details</h2><dl><dt>Attempt</dt><dd>@(application.AttemptLabel ?? $"Attempt #{Id}")</dd><dt>Applied</dt><dd>@(application.AppliedOn?.ToString("d") ?? "Not recorded")</dd><dt>Outcome date</dt><dd>@(application.OutcomeOn?.ToString("d") ?? "Not recorded")</dd></dl><h3>Outcome notes</h3><p class="plain-text">@(application.OutcomeNotes ?? "Not added")</p><h3>Notes</h3><p class="plain-text">@(application.Notes ?? "Not added")</p></section>
+        <SubmissionHistory ApplicationId="Id" /><ApplicationWork ApplicationId="Id" /><ApplicationContacts ApplicationId="Id" CompanyId="application.Position.CompanyId" /><section class="card details-card company-section"><h2>Timeline</h2><p><a href="@($"/applications/{Id}/timeline")">Full timeline</a> · <a href="@($"/applications/{Id}/events/new")">Add event</a></p>@foreach (var e in events) { <article class="timeline-entry"><strong>@e.EventDate.ToString("d") · @(e.OccurredAtUtc?.ToLocalTime().ToString("t") ?? "Time not recorded") · @e.Kind</strong><p class="plain-text">@e.Description</p></article> }</section>
+        <Attachments Kind="Scout.Web.Features.Documents.DocumentOwnerKind.Application" OwnerId="Id" ReturnUrl="@($"/applications/{Id}")" /><ArchiveActions IsArchived="application.IsArchived" Subject="application" Explanation="Archive only this application. Its history and related records are preserved." Save="@(archived => Applications.SetArchivedAsync(Id, archived))" OnChanged="LoadAsync" />
+    }
+</LoadPanel>
+@code {
+    [Parameter] public int Id { get; set; }
+    [SupplyParameterFromQuery] public string? ListQuery { get; set; }
+    private JobApplication? application;
+    private IReadOnlyList<ApplicationTimelineEvent> events = [];
+    private async Task LoadAsync()
+    {
+        application = await Applications.GetAsync(Id);
+        await using var db = await Factory.CreateDbContextAsync();
+        events = await db.TimelineEvents.AsNoTracking().Where(e => e.ApplicationId == Id && !e.IsArchived).OrderByDescending(e => e.EventDate).ThenByDescending(e => e.OccurredAtUtc).ThenByDescending(e => e.Id).ToListAsync();
+    }
+}
+
+
+
+
+

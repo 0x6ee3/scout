@@ -1,0 +1,63 @@
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager Navigation
+@inject ILogger<DraftForm> Logger
+
+<section class="card form-card">
+    <EditForm EditContext="context" OnValidSubmit="SubmitAsync" FormName="@FormName">
+        <DataAnnotationsValidator /><ValidationSummary />
+        @if (error is not null) { <div class="message error" role="alert">@error</div> }
+        <fieldset disabled="@saving">
+            <legend class="visually-hidden">@SaveLabel</legend>
+            @ChildContent
+            <div class="form-actions"><button type="submit">@(saving ? "Saving…" : SaveLabel)</button><a href="@CancelUrl">Cancel</a></div>
+        </fieldset>
+    </EditForm>
+</section>
+<NavigationLock ConfirmExternalNavigation="@(saving || context.IsModified())" OnBeforeInternalNavigation="BeforeNavigation" />
+@if (pending is not null)
+{
+    <div class="message" role="alert"><p>You have unsaved details. Leave without saving?</p><button @onclick="Leave">Leave without saving</button><button @onclick="() => pending = null">Keep editing</button></div>
+}
+@code {
+    [Parameter, EditorRequired] public object Model { get; set; } = default!;
+    [Parameter, EditorRequired] public Func<Task<string>> Save { get; set; } = default!;
+    [Parameter] public string CancelUrl { get; set; } = "/applications";
+    [Parameter] public string SaveLabel { get; set; } = "Save";
+    [Parameter] public string FormName { get; set; } = "Editor";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    private EditContext context = default!;
+    private object? previous;
+    private bool saving;
+    private string? error, pending;
+    protected override void OnParametersSet()
+    {
+        if (!ReferenceEquals(previous, Model)) { previous = Model; context = new(Model); error = pending = null; }
+    }
+    private async Task SubmitAsync()
+    {
+        if (saving) return;
+        saving = true; error = null;
+        try
+        {
+            var destination = await Save();
+            saving = false;
+            context.MarkAsUnmodified();
+            if (!string.IsNullOrEmpty(destination)) { Navigation.NavigateTo(destination); }
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException) { error = "This content changed elsewhere. Your draft is retained. Copy it, reload and review the saved version before trying again."; }
+        catch (ValidationException ex) { error = ex.Message; }
+        catch (Scout.Web.Storage.DocumentImportException ex) { error = ex.Message; }
+        catch (Exception ex) when (ex is Microsoft.EntityFrameworkCore.DbUpdateException or Microsoft.Data.Sqlite.SqliteException or IOException or UnauthorizedAccessException)
+        {
+            Logger.LogError(ex, "Could not save {FormName}.", FormName);
+            error = "The change could not be saved. Your entered details are still here. Check storage access and try again.";
+        }
+        finally { saving = false; }
+    }
+    private void BeforeNavigation(LocationChangingContext change)
+    {
+        if (saving || context.IsModified()) { change.PreventNavigation(); if (!saving) pending = change.TargetLocation; }
+    }
+    private void Leave() { var target = pending!; pending = null; context.MarkAsUnmodified(); Navigation.NavigateTo(target); }
+}
+

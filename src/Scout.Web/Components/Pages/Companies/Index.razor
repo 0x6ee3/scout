@@ -1,0 +1,50 @@
+@page "/companies"
+@using Scout.Web.Features.Companies
+@inject CompanyOperations Companies
+@inject NavigationManager Navigation
+@inject ILogger<Index> Logger
+
+<PageTitle>Companies · Scout</PageTitle>
+<div class="page-heading">
+    <div><p class="eyebrow">Your job search</p><h1>Companies</h1><p class="muted">Keep the employers you’re interested in together.</p></div>
+    <a class="button" href="/companies/new">Add company</a>
+</div>
+<form method="get" action="/companies" class="card catalog-filters" role="search" aria-label="Find companies">
+    <div class="filter-field search-field"><label for="search">Search companies</label><input id="search" name="q" value="@Search" placeholder="Name or location" /></div>
+    <div class="filter-field"><label for="archive">Show companies</label><select id="archive" name="archive">@foreach (var value in Enum.GetValues<ArchiveFilter>()) { <option value="@value" selected="@(archive == value)">@value</option> }</select></div>
+    <div class="form-actions"><button type="submit">Search</button><a href="/companies">Reset</a></div>
+</form>
+@if (failed)
+{
+    <div class="message error" role="alert">Companies could not be loaded. Saved data has not been changed.</div><button @onclick="LoadAsync">Try again</button>
+}
+else if (items is null) { <p role="status">Loading companies…</p> }
+else if (items.Count == 0)
+{
+    <section class="card empty-state"><h2>No companies in this view</h2><p>Reset the filters to see active companies, or add a company to get started.</p><div class="empty-actions"><a href="/companies">Reset filters</a><a class="button" href="/companies/new">Add company</a></div></section>
+}
+else
+{
+    <section class="card" aria-label="Saved companies">
+        <div class="list-caption" role="status">@items.Count @(items.Count == 1 ? "company" : "companies") · Name A–Z</div>
+        <ul class="company-list">@foreach (var item in items)
+        {
+            <li><a href="@CatalogLinks.Record($"/companies/{item.Id}", new Uri(Navigation.Uri).Query)"><div>@item.Name<small>@item.Location</small>@if (item.IsArchived) { <span class="badge">Archived company</span> }</div><span aria-hidden="true">→</span></a></li>
+        }</ul>
+    </section>
+}
+@code {
+    [SupplyParameterFromQuery(Name = "q")] public string? Search { get; set; }
+    [SupplyParameterFromQuery(Name = "archive")] public string? Archive { get; set; }
+    private ArchiveFilter archive => CatalogLinks.ParseEnum<ArchiveFilter>(Archive) ?? ArchiveFilter.Active;
+    private IReadOnlyList<CompanyListItem>? items;
+    private bool failed;
+    protected override Task OnParametersSetAsync() => LoadAsync();
+    private async Task LoadAsync()
+    {
+        failed = false;
+        try { items = await Companies.ListAsync(archive, Search); }
+        catch (Exception ex) when (ex is Microsoft.Data.Sqlite.SqliteException or Microsoft.EntityFrameworkCore.DbUpdateException)
+        { Logger.LogError(ex, "Could not load companies."); failed = true; }
+    }
+}
