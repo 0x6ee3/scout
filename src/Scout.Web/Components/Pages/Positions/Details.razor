@@ -14,31 +14,25 @@ else if (failed)
 else if (position is null) { <h1>Position not found</h1><p>Return to the positions list to find an existing record.</p> }
 else
 {
-    <div class="page-heading"><div><p class="eyebrow">Position</p><h1>@position.Title</h1><a href="@($"/companies/{position.CompanyId}")">@position.CompanyName</a></div><a class="button" href="@CatalogLinks.Record($"/positions/{Id}/edit", ListQuery)">Edit position</a></div>
+    <div class="page-heading"><div><p class="eyebrow">Position</p><h1>@position.Title</h1><a href="@($"/companies/{position.CompanyId}")">@position.CompanyName</a></div></div>
     @if (position.IsArchived) { <p class="badge">Archived position</p> }
     @if (position.CompanyIsArchived) { <p class="badge">Archived company</p> }
-    <section class="card details-card company-section"><h2>Opportunity details</h2><dl>
+    <PageActions><ActionLink Href="@CatalogLinks.Record($"/positions/{Id}/edit", ListQuery)" Label="Edit position" /><ArchiveActions IsArchived="position.IsArchived" Subject="position"
+        Explanation="Archiving hides this position from the active position list. Its status, original description, notes, and company link are preserved. You can restore it at any time."
+        Save="@(archived => Positions.SetArchivedAsync(Id, archived))" OnChanged="LoadAsync" /></PageActions><div class="entity-grid"><aside class="entity-column"><section class="card details-card company-section"><h2>Opportunity details</h2><dl>
         <dt>Status</dt><dd>@position.Status.DisplayName()</dd>
         <dt>Location</dt><dd class="plain-text">@(position.Location ?? "Not added")</dd>
         <dt>Employment type</dt><dd>@(position.EmploymentType ?? "Not added")</dd>
         <dt>Discovered</dt><dd>@position.DiscoveredOn.ToString("d")</dd>
         <dt>Closing date</dt><dd>@(position.ClosingOn?.ToString("d") ?? "Not added")</dd>
         <dt>Vacancy URL</dt><dd>@if (position.OriginalVacancyUrl is not null) { <a href="@position.OriginalVacancyUrl" target="_blank" rel="noopener noreferrer">@position.OriginalVacancyUrl<span class="visually-hidden"> (opens in a new tab)</span></a> } else { <span class="muted">Not added</span> }</dd>
-    </dl></section>
-    <section class="card details-card company-section"><h2>Original vacancy description</h2>
+    </dl></section><section class="card details-card company-section"><h2>Record details</h2><dl><dt>Created</dt><dd>@position.CreatedAtUtc.ToLocalTime().ToString("g")</dd><dt>Last updated</dt><dd>@position.UpdatedAtUtc.ToLocalTime().ToString("g")</dd><dt>State</dt><dd>@(position.IsArchived ? "Archived" : "Active")</dd></dl></section></aside><div class="entity-column"><section class="card details-card company-section"><h2>Original vacancy description</h2>
         @if (position.JobDescriptionSnapshot is null) { <p class="muted">No description added. You can paste the original text when editing.</p> }
-        else { <p class="field-hint">Captured @position.DescriptionCapturedAtUtc?.ToLocalTime().ToString("g"). Preserved as originally saved; add corrections to personal notes.</p><p class="plain-text">@position.JobDescriptionSnapshot</p> }
-    </section>
-    <section class="card details-card company-section"><h2>Remote-work notes</h2><p class="plain-text">@(position.RemoteWorkNotes ?? "No remote-work notes added.")</p></section>
-    <section class="card details-card company-section"><h2>Personal notes</h2><p class="plain-text">@(position.PersonalNotes ?? "No personal notes added.")</p></section>
-    <section class="card details-card company-section"><h2>Applications</h2><p><a href="@($"/next-actions?positionId={Id}")">Position actions</a> · <a href="@($"/next-actions/new?positionId={Id}")">Add position action</a></p>
-        @if (!position.IsArchived && !position.CompanyIsArchived) { <a class="button" href="@($"/applications/new?positionId={Id}")">Add application</a> }
+        else { <p class="field-hint">Captured @position.DescriptionCapturedAtUtc?.ToLocalTime().ToString("g"). Preserved as originally saved; add corrections to personal notes.</p><MarkdownText Text="@position.JobDescriptionSnapshot" /> }
+    </section><section class="card details-card company-section"><h2>Remote-work notes</h2><p class="plain-text">@(position.RemoteWorkNotes ?? "No remote-work notes added.")</p></section><section class="card details-card company-section"><h2>Personal notes</h2><p class="plain-text">@(position.PersonalNotes ?? "No personal notes added.")</p></section></div><aside class="entity-column"><section class="card details-card company-section"><h2>Applications</h2><p><a href="@($"/next-actions?positionId={Id}")">Position actions</a> · <a href="@($"/next-actions/new?positionId={Id}")">Add position action</a></p>
+        @if (!position.IsArchived && !position.CompanyIsArchived) { <ActionLink Href="@($"/applications/new?positionId={Id}")" Label="Add application" /> }
         @foreach (var attempt in attempts) { <p><a href="@($"/applications/{attempt.Id}")">@(attempt.AttemptLabel ?? $"Attempt #{attempt.Id}")</a> · @attempt.Status @(attempt.IsArchived ? "(archived)" : "")</p> }
-    </section>
-    <Attachments Kind="Scout.Web.Features.Documents.DocumentOwnerKind.Position" OwnerId="Id" ReturnUrl="@($"/positions/{Id}")" /><ArchiveActions IsArchived="position.IsArchived" Subject="position"
-        Explanation="Archiving hides this position from the active position list. Its status, original description, notes, and company link are preserved. You can restore it at any time."
-        Save="@(archived => Positions.SetArchivedAsync(Id, archived))" OnChanged="LoadAsync" />
-    <section class="card details-card company-section"><h2>Record details</h2><dl><dt>Created</dt><dd>@position.CreatedAtUtc.ToLocalTime().ToString("g")</dd><dt>Last updated</dt><dd>@position.UpdatedAtUtc.ToLocalTime().ToString("g")</dd><dt>State</dt><dd>@(position.IsArchived ? "Archived" : "Active")</dd></dl></section>
+    </section><Attachments Kind="Scout.Web.Features.Documents.DocumentOwnerKind.Position" OwnerId="Id" ReturnUrl="@($"/positions/{Id}")" /></aside></div>
 }
 @code {
     [Parameter] public int Id { get; set; }

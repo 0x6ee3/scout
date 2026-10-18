@@ -1,0 +1,26 @@
+@page "/interviews/{RoundId:int}/transcripts/{Id:int}"
+@using Scout.Web.Features.InterviewTranscripts
+@inject TranscriptOperations Operations
+@inject Scout.Web.Features.Interviews.InterviewOperations Interviews
+<PageTitle>Private transcript · Scout</PageTitle>
+<h1>Transcript review</h1>
+<LoadPanel Load="Load" LoadKey="@($"{RoundId}/{Id}")">
+@if(transcript is null){<p>Transcript not found.</p>}else{
+<p><a href="@($"/interviews/{RoundId}")">Back to interview</a></p>
+<p>@transcript.Origin · @transcript.CreatedAtUtc.ToLocalTime().ToString("g") @(transcript.ArchivedAtUtc.HasValue ? "· Archived" : "")</p>
+@if(transcript.ParentTranscriptId.HasValue){<p><a href="@($"/interviews/{RoundId}/transcripts/{transcript.ParentTranscriptId}")">Parent transcript</a></p>}
+@if(transcript.OriginalDocumentId.HasValue){<p><a href="@($"/documents/{transcript.OriginalDocumentId}/download")" download>Download original TXT</a></p>}
+<div class="transcript-columns"><section class="card details-card"><h2>Saved transcript</h2><MarkdownText Text="@transcript.Text" /></section>
+@if(!readOnly){<section class="card details-card"><h2>Save corrected copy</h2><p>The original and earlier corrections remain unchanged. Up to 1,000,000 characters.</p>
+<form method="post" enctype="multipart/form-data" action="@($"/interviews/{RoundId}/transcripts/{Id}/correct")" data-enhance="false">
+<AntiforgeryToken /><input type="hidden" name="token" value="@token" />
+<label>Corrected transcript<textarea name="text" maxlength="1000000" rows="18">@transcript.Text</textarea></label>
+<button type="submit">Save corrected copy</button>
+</form></section>}</div>
+}
+</LoadPanel>
+@code {
+    [Parameter]public int RoundId{get;set;}[Parameter]public int Id{get;set;}
+    private InterviewTranscript? transcript;private bool readOnly;private Guid token=Guid.NewGuid();
+    private async Task Load(){transcript=await Operations.GetAsync(RoundId,Id);readOnly=(await Interviews.GetAsync(RoundId))?.IsArchived??true;token=Guid.NewGuid();}
+}

@@ -1,0 +1,83 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+<dialog @ref="element" class="ui-dialog @Size" aria-labelledby="@headingId" data-busy="@((Busy || childBusy).ToString().ToLowerInvariant())" data-completed="@completed.ToString().ToLowerInvariant()">
+    <header class="dialog-heading"><h2 id="@headingId">@(discard ? "Discard these changes?" : completed ? "Changes saved" : Title)</h2><button type="button" class="icon-action" disabled="@(Busy || childBusy)" aria-label="Close dialog" @onclick="RequestFromButton"><UiIcon Name="close" /></button></header>
+    @if (Open) { <div hidden="@(discard || completed)"><CascadingValue Value="this" Name="DialogOwner" IsFixed="true">@ChildContent</CascadingValue></div> }
+    @if (discard)
+    {
+        <p>Your changes have not been saved.</p><footer class="dialog-actions"><button type="button" @onclick="KeepEditing">Keep editing</button><button type="button" class="secondary" @onclick="CloseAsync">Discard changes</button></footer>
+    }
+    else if (completed)
+    {
+        <p>@completionLabel</p><footer class="dialog-actions"><button type="button" @onclick="FinishAsync">Done</button></footer>
+    }
+    else if (Footer is not null) { <footer class="dialog-actions">@Footer</footer> }
+</dialog>
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public string Title { get; set; } = "Confirm action";
+    [Parameter] public string Size { get; set; } = "";
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Footer { get; set; }
+    private readonly string headingId = $"dialog-{Guid.NewGuid():N}";
+    private ElementReference element;
+    private IJSObjectReference? module;
+    private DotNetObjectReference<UiDialog>? reference;
+    private bool discard, completed, childBusy, previousOpen;
+    private string? completionLabel, destination, pendingNavigation;
+    private Action? closing;
+    protected override void OnParametersSet()
+    {
+        if (Open && !previousOpen) { discard = completed = childBusy = false; destination = pendingNavigation = null; closing=null; }
+        previousOpen = Open;
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!Open && module is null) return;
+        module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/ui-dialog.js");
+        reference ??= DotNetObjectReference.Create(this);
+        await module.InvokeVoidAsync("sync", element, Open, reference);
+    }
+    [JSInvokable] public async Task RequestClose(bool dirty)
+    {
+        if (Busy || childBusy) return;
+        if (completed) { await FinishAsync(); return; }
+        if (dirty) { discard = true; StateHasChanged(); return; }
+        await CloseAsync();
+    }
+    private async Task CloseAsync() { var next=pendingNavigation;pendingNavigation=null;closing?.Invoke();await OnCancel.InvokeAsync();if(next is not null)Navigation.NavigateTo(next); }
+    public void RegisterClose(Action action) => closing=action;
+    private void KeepEditing() { discard=false;pendingNavigation=null; }
+    public async Task RequestNavigationAsync(string target, bool dirty)
+    {
+        if(Busy || childBusy)return;
+        pendingNavigation=target;
+        if(module is not null)dirty|=await module.InvokeAsync<bool>("isDirty",element);
+        await RequestClose(dirty);
+    }
+    private async Task RequestFromButton() { if (module is not null) await module.InvokeVoidAsync("requestClose", element); }
+    public void SetBusy(bool value) { if(disposed)return; childBusy = value; StateHasChanged(); }
+    public void Complete(string label, string? next)
+    {
+        completionLabel = label; destination = next; completed = true; discard = false; childBusy = false; StateHasChanged();
+    }
+    private async Task FinishAsync()
+    {
+        var next = destination; await CloseAsync();
+        if (!string.IsNullOrEmpty(next)) Navigation.NavigateTo(next);
+    }
+    public async ValueTask DisposeAsync()
+    {
+        disposed = true;
+        if (module is not null)
+        {
+            try { await module.InvokeVoidAsync("dispose", element); await module.DisposeAsync(); }
+            catch (JSDisconnectedException) { }
+        }
+        reference?.Dispose();
+    }
+    private bool disposed;
+}

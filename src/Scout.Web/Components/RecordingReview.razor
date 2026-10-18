@@ -1,0 +1,50 @@
+@using Scout.Web.Features.InterviewRecordings
+@using Scout.Web.Features.Documents
+@inject RecordingOperations Operations
+@inject DocumentOperations Documents
+@inject Scout.Web.Storage.LinkedRecordingStore Links
+<section class="card details-card">
+<div class="section-heading"><h2>Recordings</h2>@if(!ReadOnly){<button type="button" class="icon-action" aria-label="Register recording" @onclick="()=>showRegister=true"><UiIcon Name="add" /><span class="action-tooltip">Register recording</span></button>}</div>
+<p>Recording happens in your external recorder. Choices are optional; ordinary notes and completion need no recording.</p>
+@if(message is not null){<p role="status">@message</p>}
+@if(!ReadOnly){<button type="button" class="secondary" @onclick="()=>showChoice=true">Recording choice</button>}
+<UiDialog Open="@showChoice" Title="Recording choice" Busy="@busy" OnCancel="()=>{showChoice=false;note=null;}"><ChildContent>
+<label>Private explanatory note (optional)<textarea maxlength="1000" @bind="note"></textarea></label>
+<button @onclick="() => Choose(RecordingChoice.NotesOnly)">Continue without recording</button>
+<button @onclick="() => Choose(RecordingChoice.ExternalConsentAcknowledged)">Consent received — use external recorder</button>
+@if(message is not null){<p role="alert">@message</p>}
+</ChildContent></UiDialog>
+<UiDialog Open="@showRegister" Title="Register selected audio" Busy="@busy" OnCancel="CancelRegistration"><ChildContent>
+<label for="recording-upload">Audio file to upload</label><InputFile @key="filePicker" id="recording-upload" OnChange="e => selected = e.File" accept=".mp3,.wav,.m4a" />
+<p>MP3/WAV/M4A, up to 1 GiB. Playback depends on browser and codec.</p>
+<label>Or existing round attachment<select @bind="documentId"><option value="0">None</option>@foreach(var d in attachments){<option value="@d.Id">@d.OriginalName</option>}</select></label>
+<label>Or working file beneath Scout/recordings (relative path)<input @bind="linkedPath" placeholder="interview/sample.wav" /></label>
+<label><input type="checkbox" @bind="consent" /> Externally obtained consent covers this selected recording.</label>
+<button disabled="@busy" @onclick="Register">Register recording</button>
+@if(message is not null){<p role="alert">@message</p>}
+</ChildContent></UiDialog>
+<UiDialog Open="@saved" Title="Changes saved" OnCancel="()=>saved=false"><ChildContent><p>The recording information was saved.</p></ChildContent><Footer><button @onclick="()=>saved=false">Done</button></Footer></UiDialog>
+@foreach(var row in recordings){<article><h3>@row.OriginalName · #@row.Id @(row.ArchivedAtUtc.HasValue ? "(archived)" : "")</h3><p>Registered @row.CreatedAtUtc.ToLocalTime().ToString("g")</p>
+<SavedRecording RoundId="RoundId" Recording="row" />
+@if(!ReadOnly){<button @onclick="() => Archive(row)">@(row.ArchivedAtUtc.HasValue ? "Restore metadata" : "Archive metadata")</button>}
+</article>}
+<details><summary>Decision history</summary>
+@foreach(var decision in history){<p>@decision.AcknowledgedAtUtc.ToLocalTime().ToString("g") · @(decision.Choice == RecordingChoice.NotesOnly ? "Continue without recording" : "Consent received — use external recorder")</p><p class="plain-text">@decision.PrivateNote</p>}
+</details></section>
+@code {
+    [Parameter] public int RoundId { get; set; }
+    [Parameter] public bool ReadOnly { get; set; }
+    private IReadOnlyList<InterviewRecording> recordings = [];
+    private IReadOnlyList<InterviewRecordingDecision> history = [];
+    private IReadOnlyList<DocumentListItem> attachments = [];
+    private IBrowserFile? selected; private int documentId; private string? note, message, linkedPath; private bool consent, busy;
+    private Guid token = Guid.NewGuid(); private int filePicker;
+    private bool showRegister, showChoice, saved;
+    protected override async Task OnParametersSetAsync() => await Reload();
+    private async Task Reload(){ recordings = await Operations.ListAsync(RoundId, true); history = await Operations.HistoryAsync(RoundId); attachments = (await Documents.LinkedAsync(new(DocumentOwnerKind.Interview,RoundId))).Where(x=>x.ContentType.StartsWith("audio/")).ToList(); }
+    private async Task Run(Func<Task> action){try{await action();message="Saved.";await Reload();showRegister=showChoice=false;saved=true;}catch(Exception ex) when(ex is System.ComponentModel.DataAnnotations.ValidationException or IOException or UnauthorizedAccessException){message=ex.Message;}}
+    private void CancelRegistration(){showRegister=false;selected=null;documentId=0;linkedPath=null;consent=false;filePicker++;message=null;}
+    private async Task Choose(RecordingChoice choice){if(busy)return;busy=true;try{await Run(()=>Operations.ChooseAsync(RoundId,choice,note));}finally{busy=false;}}
+    private Task Archive(InterviewRecording row) => Run(()=>Operations.ArchiveAsync(RoundId,row.Id,!row.ArchivedAtUtc.HasValue));
+    private async Task Register(){if(busy)return;busy=true;try{await Run(async()=>{if((selected is null?0:1)+(documentId==0?0:1)+(string.IsNullOrWhiteSpace(linkedPath)?0:1)!=1)throw new System.ComponentModel.DataAnnotations.ValidationException("Choose exactly one upload, attachment, or working path.");if(selected is not null){await using var stream=selected.OpenReadStream(Scout.Web.Storage.DocumentFileStore.MaximumAudioBytes);await Operations.UploadAsync(RoundId,selected.Name,stream,consent,note,token);}else if(!string.IsNullOrWhiteSpace(linkedPath)) await Operations.RegisterLinkAsync(RoundId,linkedPath,Links,consent,note,token);else await Operations.RegisterDocumentAsync(RoundId,documentId,consent,note,token);token=Guid.NewGuid();selected=null;documentId=0;linkedPath=null;consent=false;filePicker++;});}finally{busy=false;}}
+}

@@ -1,0 +1,5 @@
+<div class="entity-actions" role="group" aria-label="@Label">@ChildContent</div>
+@code {
+    [Parameter] public string Label { get; set; } = "Page actions";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

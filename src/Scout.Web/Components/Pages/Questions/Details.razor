@@ -6,10 +6,9 @@
 <LoadPanel Load="LoadAsync" LoadKey="@Id.ToString()">
 @if(row is null) { <h1>Question not found</h1><p>It may have been deleted.</p><a href="@Back">Back to questions</a> } else {
 <a href="@Back">← Employer questions</a><h1>@row.Text</h1><TagBadges Values="row.Tags.Select(x => x.Tag)" />
-<p><a class="button" href="@CatalogLinks.Record($"/questions/{Id}/edit", ListQuery)">Edit question</a></p>
-<section class="card details-card"><h2>Intent</h2><p class="plain-text">@(row.Intent ?? "Not added")</p><h2>Suggested follow-ups</h2><p class="plain-text">@(row.FollowUpQuestions ?? "Not added")</p><h2>Private library notes</h2><p class="plain-text">@(row.Notes ?? "Not added")</p></section>
-<ArchiveActions IsArchived="row.IsArchived" Subject="question" Explanation="Existing interview copies are preserved." Save="@(a => Questions.SetArchivedAsync(Id, a))" OnChanged="LoadAsync" />
-<section class="card"><h2>Permanent deletion</h2>@if(!confirm) { <button type="button" @onclick="() => confirm = true">Delete question permanently</button> } else { <p>This permanently deletes this catalog question and its tags. @selectionCount interview copies will retain their wording, answers, and notes. No recycle bin.</p><OperationButton Label="Confirm permanent deletion" Save="DeleteAsync" OnChanged="Deleted" /><button type="button" @onclick="() => confirm = false">Cancel deletion</button> }</section>
+<PageActions><ActionLink Href="@CatalogLinks.Record($"/questions/{Id}/edit", ListQuery)" Label="Edit question" /><button type="button" class="secondary" @onclick="() => confirm = true"><UiIcon Name="delete" /> Delete question permanently</button><ArchiveActions IsArchived="row.IsArchived" Subject="question" Explanation="Existing interview copies are preserved." Save="@(a => Questions.SetArchivedAsync(Id, a))" OnChanged="LoadAsync" /></PageActions>
+<div class="entity-grid"><section class="card details-card"><h2>Intent</h2><MarkdownText Text='@(row.Intent ?? "Not added")' /></section><section class="card details-card"><h2>Suggested follow-ups</h2><MarkdownText Text='@(row.FollowUpQuestions ?? "Not added")' /></section><section class="card details-card"><h2>Private library notes</h2><MarkdownText Text='@(row.Notes ?? "Not added")' /></section></div>
+<UiDialog Open="@confirm" Title="Delete question permanently?" OnCancel="()=>confirm=false"><ChildContent><p>This permanently deletes this catalog question and its tags. @selectionCount interview copies will retain their wording, answers, and notes. No recycle bin.</p></ChildContent><Footer><button type="button" @onclick="()=>confirm=false">Cancel deletion</button><OperationButton Label="Confirm permanent deletion" Save="DeleteAsync" OnChanged="Deleted" /></Footer></UiDialog>
 }
 </LoadPanel>
 @code {

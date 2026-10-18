@@ -3,6 +3,25 @@
 @using Scout.Web.Features.Contacts
 @inject TimelineOperations Events
 @inject ContactOperations Contacts
-<PageTitle>Timeline event · Scout</PageTitle><LoadPanel Load="LoadAsync" LoadKey="@Id.ToString()">@if(record is null){<h1>Event not found</h1>}else{<a href="@($"/applications/{record.ApplicationId}/timeline")">← Full timeline</a><h1>@record.Kind</h1><p>@record.EventDate.ToString("d") · @(record.OccurredAtUtc?.ToLocalTime().ToString("t")??"Time not recorded") · @TimeZoneInfo.Local.DisplayName</p><section class="card details-card company-section"><p class="plain-text">@record.Description</p><h2>Contacts</h2>@if(contacts.Count==0){<p>No contacts linked.</p>}@foreach(var c in contacts){<p><a href="@($"/contacts/{c.Id}")">@c.Name</a> @(c.IsArchived?"(archived)":"")</p>}<p>Recorded @record.CreatedAtUtc.ToLocalTime().ToString("g"). Updated @record.UpdatedAtUtc.ToLocalTime().ToString("g").</p></section>@if(record.IsSystem){<p>This is a system fact. Add a clarifying note to the application to explain corrections.</p>}else{<a href="@($"/events/{Id}/edit")">Edit event</a><ArchiveActions IsArchived="record.IsArchived" Subject="event" Explanation="Only this event is archived." Save="@(a=>Events.SetArchivedAsync(Id,a))" OnChanged="LoadAsync" />}@if(record.SubmissionId.HasValue){<p><a href="@($"/submissions/{record.SubmissionId}")">Submission evidence</a></p>}@if(record.InterviewRoundId.HasValue){<p><a href="@($"/interviews/{record.InterviewRoundId}")">Interview details</a></p>}<p><a href="@($"/next-actions/new?applicationId={record.ApplicationId}&timelineEventId={Id}")">Add next action</a></p><Attachments Kind="Scout.Web.Features.Documents.DocumentOwnerKind.Event" OwnerId="Id" ReturnUrl="@($"/events/{Id}")" />}</LoadPanel>
+<PageTitle>Timeline event · Scout</PageTitle>
+<LoadPanel Load="LoadAsync" LoadKey="@Id.ToString()">
+@if(record is null){<h1>Event not found</h1>}else{
+<a href="@($"/applications/{record.ApplicationId}/timeline")">← Full timeline</a><h1>@record.Kind</h1>
+<PageActions>
+@if(!record.IsSystem){<ActionLink Href="@($"/events/{Id}/edit")" Label="Edit event" />}
+<ActionLink Href="@($"/next-actions/new?applicationId={record.ApplicationId}&timelineEventId={Id}")" Label="Add next action" />
+@if(record.SubmissionId.HasValue){<ActionLink Href="@($"/submissions/{record.SubmissionId}")" Label="Submission evidence" />}
+@if(record.InterviewRoundId.HasValue){<ActionLink Href="@($"/interviews/{record.InterviewRoundId}")" Label="Interview details" />}
+@if(!record.IsSystem){<ArchiveActions IsArchived="record.IsArchived" Subject="event" Explanation="Only this event is archived." Save="@(a=>Events.SetArchivedAsync(Id,a))" OnChanged="LoadAsync" />}
+</PageActions>
+<div class="entity-grid"><aside class="entity-column"><section class="card details-card"><h2>Event context</h2>
+<p>@record.EventDate.ToString("d") · @(record.OccurredAtUtc?.ToLocalTime().ToString("t")??"Time not recorded") · @TimeZoneInfo.Local.DisplayName</p>
+<h3>Contacts</h3>@if(contacts.Count==0){<p>No contacts linked.</p>}@foreach(var c in contacts){<p><a href="@($"/contacts/{c.Id}")">@c.Name</a> @(c.IsArchived?"(archived)":"")</p>}
+<details><summary>Record information</summary><p>Recorded @record.CreatedAtUtc.ToLocalTime().ToString("g"). Updated @record.UpdatedAtUtc.ToLocalTime().ToString("g").</p></details>
+</section></aside><div class="entity-column"><section class="card details-card"><h2>Event description</h2><p class="plain-text">@record.Description</p>
+@if(record.IsSystem){<p>This is a system fact. Add a clarifying note to the application to explain corrections.</p>}
+</section></div><aside class="entity-column"><Attachments Kind="Scout.Web.Features.Documents.DocumentOwnerKind.Event" OwnerId="Id" ReturnUrl="@($"/events/{Id}")" /></aside></div>
+}
+</LoadPanel>
 @code{[Parameter]public int Id{get;set;}private ApplicationTimelineEvent? record;private IReadOnlyList<ContactListItem> contacts=[];private async Task LoadAsync(){record=await Events.GetAsync(Id);if(record is not null){var ids=await Events.SelectionAsync(Id);contacts=(await Contacts.ListAsync(archive:ArchiveFilter.All)).Where(c=>ids.Contains(c.Id)).ToList();}}}
 

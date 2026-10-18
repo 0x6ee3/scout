@@ -71,7 +71,7 @@ public sealed class MilestoneFourWorkflowTests
             await db.Database.MigrateAsync(TestContext.Current.CancellationToken);
             await Integrity(db);
             Assert.False(db.Database.HasPendingModelChanges());
-            Assert.Equal(14, (await db.Database.GetAppliedMigrationsAsync(TestContext.Current.CancellationToken)).Count());
+            Assert.Equal(db.Database.GetMigrations().Count(), (await db.Database.GetAppliedMigrationsAsync(TestContext.Current.CancellationToken)).Count());
             var row = await db.InterviewQuestions.SingleAsync(x => x.Id == 1, TestContext.Current.CancellationToken);
             Assert.Equal("Existing answer", row.Answer);
             Assert.Equal("Private question notes", row.PreparationNotes);

@@ -25,7 +25,7 @@ public sealed partial class WorkspaceOperations(IDbContextFactory<ScoutDbContext
         var cvs = await db.SubmissionFiles.Where(x => x.Submission.ApplicationId == round.ApplicationId && !x.Submission.IsIncorrect && x.Role == SubmissionFileRole.CV).Select(x => new CvChoice(x.SubmissionId + "/" + x.DocumentId, x.LabelSnapshot, x.Submission.SubmittedOn)).ToListAsync();
         var prior = await db.InterviewQuestions.Where(x => x.InterviewRound.ApplicationId == round.ApplicationId && x.InterviewRoundId != id && x.Answer != null).Select(x => new PriorAnswerChoice(x.Id, x.InterviewRound.Title, x.InterviewRound.ScheduledAtUtc, x.Text, x.Answer)).ToListAsync();
         var revision = await db.Set<InterviewWorkspaceConfiguration>().Where(x => x.InterviewRoundId == id).Select(x => (int?)x.ConfigurationRevision).SingleOrDefaultAsync() ?? 0;
-        return new(round, round.Application.Position.Company.Name, revision, await db.Set<InterviewWorkspaceConfiguration>().Where(x => x.InterviewRoundId == id).Select(x => (Guid?)x.WorkspaceId).SingleOrDefaultAsync(), questions, experiences, cvs, prior);
+        return new(round, round.Application.Position.Company.Name, revision, await db.Set<InterviewWorkspaceConfiguration>().Where(x => x.InterviewRoundId == id).Select(x => (Guid?)x.WorkspaceId).SingleOrDefaultAsync(), questions, experiences, cvs, prior) { RecordingChoicePreview = await ChoiceStatusAsync(db, id), RecordingDecisionRevision = await db.RecordingDecisions.Where(x => x.InterviewRoundId == id).Select(x => (int?)x.Id).MaxAsync() ?? 0 };
     }
 
     public async Task ApproveAsync(int id, WorkspaceApproval input)
@@ -58,6 +58,7 @@ public sealed partial class WorkspaceOperations(IDbContextFactory<ScoutDbContext
         c.JobDescription = input.JobDescription ? setup.Round.Application.Position.JobDescriptionSnapshot : null;
         c.PreparationNotes = input.PreparationNotes ? setup.Round.PreparationNotes : null;
         c.InterviewNotesEnabled = input.InterviewNotes;
+        c.RecordingChoiceEnabled = input.RecordingChoice;
         c.SubmissionId = c.DocumentId = null;
         if (!string.IsNullOrEmpty(input.CvKey))
         {
@@ -104,14 +105,14 @@ public sealed partial class WorkspaceOperations(IDbContextFactory<ScoutDbContext
         await using var transaction = await db.Database.BeginTransactionAsync();
         if (!await AllowedAsync(db, id, revision))
             return null;
-        var c = await db.Set<InterviewWorkspaceConfiguration>().AsNoTracking().Where(x => x.InterviewRoundId == id).Select(x => new { x.WorkspaceId, x.ConfigurationRevision, x.ApprovedAtUtc, x.InterviewRound.IsArchived, x.RoundTitle, x.CompanyName, x.PositionTitle, x.ScheduledAtUtc, x.JobDescription, x.PreparationNotes, x.InterviewNotesEnabled, x.DocumentId }).SingleAsync();
+        var c = await db.Set<InterviewWorkspaceConfiguration>().AsNoTracking().Where(x => x.InterviewRoundId == id).Select(x => new { x.WorkspaceId, x.ConfigurationRevision, x.ApprovedAtUtc, x.InterviewRound.IsArchived, x.RoundTitle, x.CompanyName, x.PositionTitle, x.ScheduledAtUtc, x.JobDescription, x.PreparationNotes, x.InterviewNotesEnabled, x.DocumentId, x.RecordingChoiceEnabled }).SingleAsync();
         var notes = c.InterviewNotesEnabled ? await db.Interviews.Where(x => x.Id == id).Select(x => x.InterviewNotes).SingleAsync() : null;
         var questions = await db.Set<WorkspaceQuestion>().AsNoTracking().Where(x => x.InterviewRoundId == id).OrderBy(x => x.DisplayOrder).ThenBy(x => x.InterviewQuestionId).Select(x => new WorkspaceQuestionView(x.InterviewQuestionId, x.Text, x.Intent, x.FollowUpQuestions, x.PreparationNotes, x.TagsJson, x.AnswerEnabled, null, x.Question.ContentRevision, x.Question.IsAsked, x.Question.FollowUpRequired, x.Question.Origin)).ToListAsync();
         var answers = await db.Set<WorkspaceQuestion>().Where(x => x.InterviewRoundId == id && x.AnswerEnabled).Select(x => new { x.InterviewQuestionId, x.Question.Answer }).ToDictionaryAsync(x => x.InterviewQuestionId, x => x.Answer);
         questions = questions.Select(x => x with { Answer = answers.GetValueOrDefault(x.Id) }).ToList();
         var experiences = await db.Set<WorkspaceExperience>().AsNoTracking().Where(x => x.InterviewRoundId == id).OrderBy(x => x.DisplayOrder).ThenBy(x => x.InterviewExperienceId).Select(x => new WorkspaceExperienceView(x.InterviewExperienceId, x.Title, x.MemoryCue, x.Situation, x.Task, x.Action, x.Result, x.Reflection, x.UsefulFor, x.Notes, x.PreparationNotes, x.TagsJson)).ToListAsync();
         var prior = await db.Set<WorkspacePriorAnswer>().Where(x => x.InterviewRoundId == id).Select(x => new PriorAnswerChoice(x.SourceQuestionId, x.RoundTitle, x.ScheduledAtUtc, x.Text, x.Answer)).ToListAsync();
-        return new(c.WorkspaceId, id, c.ConfigurationRevision, c.ApprovedAtUtc, c.IsArchived, c.RoundTitle, c.CompanyName, c.PositionTitle, c.ScheduledAtUtc, c.JobDescription, c.PreparationNotes, c.InterviewNotesEnabled, notes, c.DocumentId.HasValue, await db.Interviews.Where(x => x.Id == id).Select(x => x.NotesRevision).SingleAsync(), questions, experiences, prior);
+        return new(c.WorkspaceId, id, c.ConfigurationRevision, c.ApprovedAtUtc, c.IsArchived, c.RoundTitle, c.CompanyName, c.PositionTitle, c.ScheduledAtUtc, c.JobDescription, c.PreparationNotes, c.InterviewNotesEnabled, notes, c.DocumentId.HasValue, await db.Interviews.Where(x => x.Id == id).Select(x => x.NotesRevision).SingleAsync(), questions, experiences, prior) { RecordingChoiceStatus = c.RecordingChoiceEnabled ? await ChoiceStatusAsync(db, id) : null };
     }
 
     public async Task<Document?> CvAsync(int id, int revision)

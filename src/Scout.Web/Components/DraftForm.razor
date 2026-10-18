@@ -3,21 +3,19 @@
 @inject ILogger<DraftForm> Logger
 
 <section class="card form-card">
-    <EditForm EditContext="context" OnValidSubmit="SubmitAsync" FormName="@FormName">
+    <EditForm id="@FormName" EditContext="context" OnValidSubmit="SubmitAsync" FormName="@FormName">
         <DataAnnotationsValidator /><ValidationSummary />
         @if (error is not null) { <div class="message error" role="alert">@error</div> }
-        <fieldset disabled="@saving">
+        <div class="form-actions"><button type="submit" disabled="@(saving || success)"><UiIcon Name="check" />@(saving ? "Saving…" : SaveLabel)</button>@if (DialogOwner is null) { <a href="@CancelUrl">Cancel</a> } else { <button type="button" class="secondary" disabled="@saving" @onclick="() => DialogOwner.RequestClose(context.IsModified())">Cancel</button> }</div>
+        <fieldset class="editor-fields" disabled="@(saving || success)">
             <legend class="visually-hidden">@SaveLabel</legend>
             @ChildContent
-            <div class="form-actions"><button type="submit">@(saving ? "Saving…" : SaveLabel)</button><a href="@CancelUrl">Cancel</a></div>
         </fieldset>
     </EditForm>
 </section>
 <NavigationLock ConfirmExternalNavigation="@(saving || context.IsModified())" OnBeforeInternalNavigation="BeforeNavigation" />
-@if (pending is not null)
-{
-    <div class="message" role="alert"><p>You have unsaved details. Leave without saving?</p><button @onclick="Leave">Leave without saving</button><button @onclick="() => pending = null">Keep editing</button></div>
-}
+<UiDialog Open="@(pending is not null)" Title="Leave without saving?" OnCancel="() => pending = null"><ChildContent><p>You have unsaved details.</p></ChildContent><Footer><button type="button" @onclick="() => pending = null">Keep editing</button><button type="button" class="secondary" @onclick="Leave">Leave without saving</button></Footer></UiDialog>
+<UiDialog Open="@success" Title="Changes saved" OnCancel="Finish"><ChildContent><p>@SaveLabel completed successfully.</p></ChildContent><Footer><button type="button" @onclick="Finish">Done</button></Footer></UiDialog>
 @code {
     [Parameter, EditorRequired] public object Model { get; set; } = default!;
     [Parameter, EditorRequired] public Func<Task<string>> Save { get; set; } = default!;
@@ -25,24 +23,33 @@
     [Parameter] public string SaveLabel { get; set; } = "Save";
     [Parameter] public string FormName { get; set; } = "Editor";
     [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public bool AcknowledgeEmptyResult { get; set; }
+    [CascadingParameter(Name = "DialogOwner")] public UiDialog? DialogOwner { get; set; }
+    public bool IsSaving => saving;
+    public string? Error => error;
     private EditContext context = default!;
     private object? previous;
-    private bool saving;
-    private string? error, pending;
+    private bool saving, success, allowNavigation;
+    private string? error, pending, destination;
     protected override void OnParametersSet()
     {
-        if (!ReferenceEquals(previous, Model)) { previous = Model; context = new(Model); error = pending = null; }
+        if (!ReferenceEquals(previous, Model)) { previous = Model; context = new(Model); error = pending = null; success=allowNavigation=false; DialogOwner?.RegisterClose(()=>{context.MarkAsUnmodified();allowNavigation=true;}); }
     }
     private async Task SubmitAsync()
     {
         if (saving) return;
         saving = true; error = null;
+        DialogOwner?.SetBusy(true);
         try
         {
-            var destination = await Save();
+            destination = await Save();
             saving = false;
-            context.MarkAsUnmodified();
-            if (!string.IsNullOrEmpty(destination)) { Navigation.NavigateTo(destination); }
+            if (!string.IsNullOrEmpty(destination) || AcknowledgeEmptyResult)
+            {
+                context.MarkAsUnmodified();
+                if (DialogOwner is not null) DialogOwner.Complete($"{SaveLabel} completed successfully.", destination);
+                else success = true;
+            }
         }
         catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException) { error = "This content changed elsewhere. Your draft is retained. Copy it, reload and review the saved version before trying again."; }
         catch (ValidationException ex) { error = ex.Message; }
@@ -52,12 +59,15 @@
             Logger.LogError(ex, "Could not save {FormName}.", FormName);
             error = "The change could not be saved. Your entered details are still here. Check storage access and try again.";
         }
-        finally { saving = false; }
+        finally { saving = false; DialogOwner?.SetBusy(false); }
     }
-    private void BeforeNavigation(LocationChangingContext change)
+    private async Task BeforeNavigation(LocationChangingContext change)
     {
+        if(allowNavigation)return;
+        if(DialogOwner is not null){change.PreventNavigation();if(!saving)await DialogOwner.RequestNavigationAsync(change.TargetLocation,context.IsModified());return;}
         if (saving || context.IsModified()) { change.PreventNavigation(); if (!saving) pending = change.TargetLocation; }
     }
     private void Leave() { var target = pending!; pending = null; context.MarkAsUnmodified(); Navigation.NavigateTo(target); }
+    private void Finish() { success = false; if (!string.IsNullOrEmpty(destination)) Navigation.NavigateTo(destination); }
 }
 

@@ -1,4 +1,5 @@
 @inherits LayoutComponentBase
+@inject NavigationManager Navigation
 
 <div class="app-shell">
     <header class="app-header">
@@ -6,7 +7,8 @@
         <nav aria-label="Main navigation"><NavLink href="/companies">Companies</NavLink><NavLink href="/positions">Positions</NavLink><NavLink href="/applications">Applications</NavLink><NavLink href="/next-actions">Next actions</NavLink><NavLink href="/documents">Documents</NavLink><NavLink href="/cvs">CVs</NavLink><NavLink href="/questions">Employer questions</NavLink><NavLink href="/experiences">STAR experiences</NavLink></nav>
         <span class="local-label">Personal · Local</span>
     </header>
-    <main id="main-content">@Body</main>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <main id="main-content"><EntityBreadcrumbs Uri="@Navigation.Uri" />@Body</main>
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>

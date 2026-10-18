@@ -3,6 +3,7 @@ namespace Scout.Web.Features.InterviewWorkspace;
 
 public sealed class WorkspaceApproval
 {
+    public bool RecordingChoice { get; set; }
     public int ExpectedRevision
     {
         get; set;
@@ -107,10 +108,13 @@ public sealed record CvChoice(string Key, string Label, DateOnly SubmittedOn);
 public sealed record PriorAnswerChoice(int Id, string RoundTitle, DateTime? ScheduledAtUtc, string Text, string? Answer);
 public sealed record WorkspaceSetupData(InterviewRound Round, string CompanyName, int Revision, Guid? WorkspaceId, IReadOnlyList<InterviewQuestion> Questions, IReadOnlyList<InterviewExperience> Experiences, IReadOnlyList<CvChoice> Cvs, IReadOnlyList<PriorAnswerChoice> PriorAnswers)
 {
+    public int RecordingDecisionRevision { get; init; }
+    public string RecordingChoicePreview { get; init; } = "No recording choice recorded";
     // Detect source changes between the visible private preview and approval.
     public string ReviewStamp => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new
     {
         Round.Id,
+        RecordingDecisionRevision,
         Round.ApplicationId,
         Round.Title,
         Round.IsArchived,
@@ -126,6 +130,6 @@ public sealed record WorkspaceSetupData(InterviewRound Round, string CompanyName
         PriorAnswers
     })));
 }
-public sealed record WorkspaceView(Guid WorkspaceId, int RoundId, int Revision, DateTime ApprovedAtUtc, bool ReadOnly, string? RoundTitle, string? CompanyName, string? PositionTitle, DateTime? ScheduledAtUtc, string? JobDescription, string? PreparationNotes, bool NotesEnabled, string? InterviewNotes, bool HasCv, int NotesRevision, IReadOnlyList<WorkspaceQuestionView> Questions, IReadOnlyList<WorkspaceExperienceView> Experiences, IReadOnlyList<PriorAnswerChoice> PriorAnswers);
+public sealed record WorkspaceView(Guid WorkspaceId, int RoundId, int Revision, DateTime ApprovedAtUtc, bool ReadOnly, string? RoundTitle, string? CompanyName, string? PositionTitle, DateTime? ScheduledAtUtc, string? JobDescription, string? PreparationNotes, bool NotesEnabled, string? InterviewNotes, bool HasCv, int NotesRevision, IReadOnlyList<WorkspaceQuestionView> Questions, IReadOnlyList<WorkspaceExperienceView> Experiences, IReadOnlyList<PriorAnswerChoice> PriorAnswers) { public string? RecordingChoiceStatus { get; init; } }
 public sealed record WorkspaceQuestionView(int Id, string Text, string? Intent, string? FollowUps, string? PreparationNotes, string TagsJson, bool AnswerEnabled, string? Answer, int ContentRevision, bool IsAsked, bool FollowUpRequired, InterviewQuestionOrigin Origin);
 public sealed record WorkspaceExperienceView(int Id, string Title, string? Cue, string? Situation, string? Task, string? Action, string? Result, string? Reflection, string? UsefulFor, string? Notes, string? PreparationNotes, string TagsJson);

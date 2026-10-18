@@ -1,14 +1,18 @@
 @using Scout.Web.Features.Contacts
 @inject ContactOperations Contacts
-<section class="card details-card company-section"><h2>Contacts</h2><a href="@($"/contacts?companyId={CompanyId}")">Company contacts</a> · <a href="@($"/contacts/new?companyId={CompanyId}")">Add contact</a>
+<section class="card details-card company-section"><div class="section-heading"><h2>Contacts</h2><div class="item-actions"><button type="button" class="icon-action" aria-label="Manage application contacts" @onclick="()=>showPicker=true"><UiIcon Name="people" /><span class="action-tooltip">Manage application contacts</span></button><button type="button" class="icon-action" aria-label="Add company contact" @onclick="()=>showContact=true"><UiIcon Name="add" /><span class="action-tooltip">Add company contact</span></button></div></div><a href="@($"/contacts?companyId={CompanyId}")">Company contacts</a>
 @foreach (var c in related) { <p><a href="@($"/contacts/{c.Id}")">@c.Name</a> · @c.Origin @(c.IsArchived ? "· Archived" : "")</p> }
-<DraftForm Model="@draft" Save="SaveAsync" CancelUrl="@($"/applications/{ApplicationId}")" SaveLabel="Save application contacts" FormName="ApplicationContacts"><ContactPicker Contacts="options" Selected="draft.ContactIds" Model="@draft" Label="Explicit application contacts" /></DraftForm>
 </section>
+<UiDialog Open="@showPicker" Title="Manage application contacts" OnCancel="ClosePicker"><ChildContent><DraftForm Model="@draft" Save="SaveAsync" CancelUrl="@($"/applications/{ApplicationId}")" SaveLabel="Save application contacts" FormName="ApplicationContacts"><ContactPicker Contacts="options" Selected="draft.ContactIds" Model="@draft" Label="Explicit application contacts" /></DraftForm></ChildContent></UiDialog>
+<UiDialog Open="@showContact" Title="Add company contact" OnCancel="()=>showContact=false"><ChildContent><NewContactForm CompanyId="CompanyId" ReturnUrl="@($"/applications/{ApplicationId}")" OnCreated="ReloadContacts" /></ChildContent></UiDialog>
 @code {
     [Parameter] public int ApplicationId { get; set; } [Parameter] public int CompanyId { get; set; }
     private sealed class Selection { public HashSet<int> ContactIds { get; set; } = []; }
     private Selection draft = new(); private IReadOnlyList<ContactListItem> options = []; private IReadOnlyList<RelatedContact> related = [];
     private int? loadedId;
+    private bool showPicker, showContact;
+    private async Task ClosePicker() { showPicker=false;draft=new(){ContactIds=await Contacts.ApplicationSelectionAsync(ApplicationId)}; }
+    private async Task ReloadContacts() { options = await Contacts.ListAsync(CompanyId, ArchiveFilter.All); related = await Contacts.RelatedAsync(ApplicationId); }
     protected override async Task OnParametersSetAsync() { if(loadedId==ApplicationId)return; options = await Contacts.ListAsync(CompanyId, ArchiveFilter.All); draft = new() { ContactIds = await Contacts.ApplicationSelectionAsync(ApplicationId) }; related = await Contacts.RelatedAsync(ApplicationId); loadedId=ApplicationId; }
     private async Task<string> SaveAsync() { await Contacts.SaveApplicationContactsAsync(ApplicationId, draft.ContactIds); related = await Contacts.RelatedAsync(ApplicationId); StateHasChanged(); return $"/applications/{ApplicationId}"; }
 }

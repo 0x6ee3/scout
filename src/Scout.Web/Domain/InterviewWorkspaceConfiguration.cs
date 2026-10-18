@@ -2,6 +2,7 @@ namespace Scout.Web.Domain;
 
 public sealed class InterviewWorkspaceConfiguration
 {
+    public bool RecordingChoiceEnabled { get; set; }
     public int InterviewRoundId
     {
         get; set;

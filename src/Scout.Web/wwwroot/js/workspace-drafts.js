@@ -183,6 +183,8 @@ export async function registerEditor(element, dotnet, config) {
     } catch { state.storageAvailable = false; feedback(state, 'Draft recovery unavailable — save or copy now'); }
     if (!state.disposed) element.querySelector('fieldset').disabled = false;
 }
+export function previewText(element) { return element.querySelector('textarea[data-field="text"]')?.value ?? ''; }
+
 export function disposeEditor(element) {
     const state = editors.get(element); if (!state) return;
     state.disposed = true; resetTimers(state);

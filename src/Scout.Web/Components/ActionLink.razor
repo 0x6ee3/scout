@@ -1,0 +1,13 @@
+<a href="@Href" class="@(Compact ? "icon-action" : Primary ? "button" : "button secondary")" aria-label="@(Compact ? Label : null)" target="@Target" rel="@(Target == "_blank" ? "noopener noreferrer" : null)" data-enhance-nav="@Enhanced.ToString().ToLowerInvariant()">
+    <UiIcon Name="@(Icon ?? UiIcon.ForLabel(Label))" />
+    @if (Compact) { <span class="action-tooltip">@Label</span> } else { <span>@Label</span> }
+</a>
+@code {
+    [Parameter, EditorRequired] public string Href { get; set; } = "";
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public string? Target { get; set; }
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public bool Primary { get; set; }
+    [Parameter] public bool Enhanced { get; set; } = true;
+}

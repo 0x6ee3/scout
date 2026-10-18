@@ -7,7 +7,7 @@
 @inject ILogger<Index> Logger
 
 <PageTitle>Positions · Scout</PageTitle>
-<div class="page-heading"><div><p class="eyebrow">Your opportunities</p><h1>Positions</h1><p class="muted">Keep vacancy details and your own notes together.</p></div><a class="button" href="/positions/new">Add position</a></div>
+<div class="page-heading"><div><p class="eyebrow">Your opportunities</p><h1>Positions</h1><p class="muted">Keep vacancy details and your own notes together.</p></div><ActionLink Href="/positions/new" Label="Add position" /></div>
 <form method="get" action="/positions" class="card catalog-filters" role="search" aria-label="Find positions">
     <div class="filter-field search-field"><label for="search">Search positions</label><input id="search" name="q" value="@Search" placeholder="Title, company or location" /></div>
     <div class="filter-field"><label for="company">Company</label><select id="company" name="companyId"><option value="" selected="@(!companyId.HasValue)">All companies</option>
@@ -25,7 +25,7 @@
 else if (items is null) { <p role="status">Loading positions…</p> }
 else if (items.Count == 0)
 {
-    <section class="card empty-state"><h2>No positions in this view</h2><p>Reset the filters to see active positions, or add a position for an active company.</p><div class="empty-actions"><a href="/positions">Reset filters</a><a class="button" href="/positions/new">Add position</a></div></section>
+    <section class="card empty-state"><h2>No positions in this view</h2><p>Reset the filters to see active positions, or add a position for an active company.</p><div class="empty-actions"><a href="/positions">Reset filters</a><ActionLink Href="/positions/new" Label="Add position" /></div></section>
 }
 else
 {

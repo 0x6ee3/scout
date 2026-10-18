@@ -8,18 +8,22 @@
     @if (application is null) { <h1>Application not found</h1> }
     else
     {
-        <div class="page-heading"><div><p class="eyebrow">Application #@Id · @application.Status</p><h1>@application.Position.Title</h1><p><a href="@($"/companies/{application.Position.CompanyId}")">@application.Position.Company.Name</a> · <a href="@($"/positions/{application.PositionId}")">Position details</a></p></div><a class="button" href="@CatalogLinks.Record($"/applications/{Id}/edit", ListQuery)">Edit application</a></div>
+        <div class="page-heading"><div><p class="eyebrow">@(application.AttemptLabel ?? $"Application #{Id}") · @application.Status</p><h1>@application.Position.Title</h1><p>@application.Position.Company.Name</p></div></div>
+        <PageActions Label="Application actions"><button type="button" @onclick="()=>showEdit=true"><UiIcon Name="edit" /> Edit application</button><ActionLink Href="@($"/applications/{Id}/interviews/new")" Label="Add interview" /><ActionLink Href="@($"/next-actions/new?applicationId={Id}")" Label="Add next action" /><ActionLink Href="@($"/positions/{application.PositionId}")" Label="Open position" /><ArchiveActions IsArchived="application.IsArchived" Subject="application" Explanation="Archive only this application. Its history, files and related records are preserved." Save="@(archived => Applications.SetArchivedAsync(Id, archived))" OnChanged="LoadAsync" /></PageActions>
+        <UiDialog Open="@showEdit" Title="Edit application" Size="wide" OnCancel="CloseEditor"><ChildContent><ActionLink Href="@CatalogLinks.Record($"/applications/{Id}/edit",ListQuery)" Label="Open full editor" /><ApplicationEditorForm Id="Id" ListQuery="@ListQuery" /></ChildContent></UiDialog>
         @if (application.IsArchived) { <p class="badge">Archived application</p> }
         @if (application.Position.IsArchived || application.Position.Company.IsArchived) { <p class="badge">Archived parent</p> }
-        <section class="card details-card company-section"><h2>Application details</h2><dl><dt>Attempt</dt><dd>@(application.AttemptLabel ?? $"Attempt #{Id}")</dd><dt>Applied</dt><dd>@(application.AppliedOn?.ToString("d") ?? "Not recorded")</dd><dt>Outcome date</dt><dd>@(application.OutcomeOn?.ToString("d") ?? "Not recorded")</dd></dl><h3>Outcome notes</h3><p class="plain-text">@(application.OutcomeNotes ?? "Not added")</p><h3>Notes</h3><p class="plain-text">@(application.Notes ?? "Not added")</p></section>
-        <SubmissionHistory ApplicationId="Id" /><ApplicationWork ApplicationId="Id" /><ApplicationContacts ApplicationId="Id" CompanyId="application.Position.CompanyId" /><section class="card details-card company-section"><h2>Timeline</h2><p><a href="@($"/applications/{Id}/timeline")">Full timeline</a> · <a href="@($"/applications/{Id}/events/new")">Add event</a></p>@foreach (var e in events) { <article class="timeline-entry"><strong>@e.EventDate.ToString("d") · @(e.OccurredAtUtc?.ToLocalTime().ToString("t") ?? "Time not recorded") · @e.Kind</strong><p class="plain-text">@e.Description</p></article> }</section>
-        <Attachments Kind="Scout.Web.Features.Documents.DocumentOwnerKind.Application" OwnerId="Id" ReturnUrl="@($"/applications/{Id}")" /><ArchiveActions IsArchived="application.IsArchived" Subject="application" Explanation="Archive only this application. Its history and related records are preserved." Save="@(archived => Applications.SetArchivedAsync(Id, archived))" OnChanged="LoadAsync" />
+        <div class="entity-grid"><aside class="entity-column"><section class="card details-card company-section"><h2>Application context</h2><dl><dt>Attempt</dt><dd>@(application.AttemptLabel ?? $"Attempt #{Id}")</dd><dt>Applied</dt><dd>@(application.AppliedOn?.ToString("d") ?? "Not recorded")</dd><dt>Outcome date</dt><dd>@(application.OutcomeOn?.ToString("d") ?? "Not recorded")</dd></dl><h3>Outcome notes</h3><p class="plain-text">@(application.OutcomeNotes ?? "Not added")</p><h3>Notes</h3><p class="plain-text">@(application.Notes ?? "Not added")</p></section><ApplicationContacts ApplicationId="Id" CompanyId="application.Position.CompanyId" /></aside>
+        <div class="entity-column"><ApplicationWork ApplicationId="Id" /></div>
+        <aside class="entity-column"><section class="card details-card company-section"><div class="section-heading"><h2>Timeline</h2><ActionLink Href="@($"/applications/{Id}/events/new")" Label="Add event" Compact="true" /></div><p><a href="@($"/applications/{Id}/timeline")">Full timeline</a></p>@foreach (var e in events) { <article class="timeline-entry"><strong>@e.EventDate.ToString("d") · @(e.OccurredAtUtc?.ToLocalTime().ToString("t") ?? "Time not recorded") · @e.Kind</strong><p class="plain-text">@e.Description</p></article> }</section><SubmissionHistory ApplicationId="Id" /><Attachments Kind="Scout.Web.Features.Documents.DocumentOwnerKind.Application" OwnerId="Id" ReturnUrl="@($"/applications/{Id}")" /></aside></div>
     }
 </LoadPanel>
 @code {
     [Parameter] public int Id { get; set; }
     [SupplyParameterFromQuery] public string? ListQuery { get; set; }
     private JobApplication? application;
+    private bool showEdit;
+    private async Task CloseEditor(){showEdit=false;await LoadAsync();}
     private IReadOnlyList<ApplicationTimelineEvent> events = [];
     private async Task LoadAsync()
     {

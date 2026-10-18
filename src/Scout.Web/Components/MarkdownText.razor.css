@@ -1,0 +1,5 @@
+.markdown-text { overflow-wrap: anywhere; min-width: 0; line-height: 1.6; }
+.markdown-text ::deep pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: .75rem; background: #f2f4f6; }
+.markdown-text ::deep code { white-space: pre-wrap; }
+.markdown-text ::deep blockquote { border-left: .2rem solid #657a8c; margin-left: 0; padding-left: 1rem; }
+.markdown-text ::deep h1, .markdown-text ::deep h2, .markdown-text ::deep h3 { line-height: 1.3; }

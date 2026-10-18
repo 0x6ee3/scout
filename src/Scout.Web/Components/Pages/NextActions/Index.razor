@@ -5,7 +5,7 @@
 @inject Scout.Web.Features.Applications.ApplicationOperations Applications
 @inject Scout.Web.Features.Positions.PositionOperations Positions
 @inject NavigationManager Navigation
-<PageTitle>Next actions · Scout</PageTitle><h1>Next actions</h1><a class="button" href="@CatalogLinks.Record("/next-actions/new", Query)">Add action</a>
+<PageTitle>Next actions · Scout</PageTitle><h1>Next actions</h1><ActionLink Href="@CatalogLinks.Record("/next-actions/new", Query)" Label="Add action" />
 <form method="get" action="/next-actions" class="filter-form">
 <label>Search <input name="q" value="@Q" /></label>
 <label>Status <select name="status" value="@(Status ?? "Open")"><option value="All" selected="@(Status=="All")">All</option>@foreach(var s in Enum.GetValues<NextActionStatus>()) {<option value="@s" selected="@((Status??"Open")==s.ToString())">@s</option>}</select></label>

@@ -1,4 +1,3 @@
-<p><a class="button" href="@($"/interviews/{Id}/workspace/setup")">Start Interview Workspace</a></p>
 @page "/interviews/{Id:int}/preparation"
 @using Scout.Web.Features.Interviews
 @using Scout.Web.Features.Questions
@@ -14,41 +13,50 @@
 @if(round is null) { <h1>Interview not found</h1> } else {
 <a href="@($"/interviews/{Id}")">← Interview</a><h1>Prepare: @round.Title</h1><p>@companyName · @round.Application.Position.Title · Application @round.ApplicationId · @round.Status @(round.IsArchived ? "· Archived" : "")</p>
 <p class="message">Private preparation page. Save changes explicitly. This is not the screen-shareable Interview Workspace.</p>
-<h2>Questions to ask</h2>
-@if(!round.IsArchived) { <PreparationPicker Choices="choices" AlreadySelected="selectedSources" ReturnUrl="@Back" OnSave="AddQuestions" /> } else { <p>Restore the interview before adding or restoring preparation.</p> }
+<PageActions Label="Interview preparation actions"><ActionLink Href="@($"/interviews/{Id}/workspace/setup")" Label="Review and open Workspace" Icon="workspace" /><ActionLink Href="@($"/interviews/{Id}")" Label="Interview details" />@if(!round.IsArchived){<button type="button" class="secondary" @onclick="()=>showQuestions=true"><UiIcon Name="add" /> Add questions</button><button type="button" class="secondary" @onclick="()=>showExperiences=true"><UiIcon Name="add" /> Add experiences</button>}</PageActions>
+<div class="entity-grid"><aside class="entity-column"><section class="card details-card"><h2>Interview context</h2><dl><dt>Company</dt><dd>@companyName</dd><dt>Position</dt><dd>@round.Application.Position.Title</dd><dt>When</dt><dd>@round.ScheduledAtUtc?.ToLocalTime().ToString("g")</dd><dt>Type</dt><dd>@round.Type</dd><dt>Status</dt><dd>@round.Status</dd></dl><h3>Preparation notes</h3><MarkdownText Text="@round.PreparationNotes" /></section><section class="card details-card"><h2>Reference material</h2><p><a href="@($"/positions/{round.Application.PositionId}")">Position details</a></p><p><a href="@($"/applications/{round.ApplicationId}")">Application and exact submitted files</a></p><p class="field-hint">This is private preparation. Shared content requires a separate review.</p></section></aside><div class="entity-column"><section class="card"><div class="section-heading"><h2>Questions to ask</h2>@if(!round.IsArchived){<button type="button" class="icon-action" aria-label="Add questions" @onclick="()=>showQuestions=true"><UiIcon Name="add" /><span class="action-tooltip">Add questions</span></button>}</div>
+@if(round.IsArchived) { <p>Restore the interview before adding or restoring preparation.</p> }
 <label class="checkbox-label"><input type="checkbox" @bind="showRemoved" /> Show removed questions</label>
 @if(!questions.Any(x => x.IsArchived == showRemoved)) { <p>No @(showRemoved ? "removed" : "selected") questions.</p> }
 @foreach(var item in questions.Where(x => x.IsArchived == showRemoved))
 {
-<section class="card" @key="@($"question-{item.Id}")">
-<h3>@item.Text</h3>
+<article class="preparation-entry" @key="@($"question-{item.Id}")">
+<MarkdownText Text="@item.Text" />
 @if(item.EmployerQuestionId.HasValue) { <a href="@($"/questions/{item.EmployerQuestionId}")">Source question</a>@if(item.EmployerQuestion?.IsArchived == true) { <span class="badge">Source archived</span> } } else if(item.Origin == InterviewQuestionOrigin.AdHoc) { <span class="badge">Ad hoc question</span> } else { <span class="badge">Source question deleted</span> }
-<p>Prepared wording is a local copy.</p><dl><dt>Intent</dt><dd class="plain-text">@item.Intent</dd><dt>Suggested follow-ups</dt><dd class="plain-text">@item.FollowUpQuestions</dd><dt>Private preparation notes</dt><dd class="plain-text">@item.PreparationNotes</dd><dt>Answer for this interview</dt><dd class="plain-text">@(item.Answer ?? "Not recorded")</dd></dl>
-<a class="button" href="@($"/interviews/{Id}/questions/{item.Id}/edit")">Edit wording / answer</a>
-@if(!item.IsArchived && !round.IsArchived) { <OperationButton Label="Move question up" Save="@(() => PreparationOperations.MoveQuestionAsync(Id, item.Id, -1))" OnChanged="LoadAsync" /><OperationButton Label="Move question down" Save="@(() => PreparationOperations.MoveQuestionAsync(Id, item.Id, 1))" OnChanged="LoadAsync" /> }
-<OperationButton Label="@(item.IsArchived ? "Restore question selection" : "Remove question from preparation")" Save="@(() => PreparationOperations.ArchiveQuestionAsync(Id, item.Id, !item.IsArchived))" OnChanged="LoadAsync" />
-</section>
+<p>Prepared wording is a local copy.</p><dl><dt>Intent</dt><dd><MarkdownText Text="@item.Intent" /></dd><dt>Suggested follow-ups</dt><dd><MarkdownText Text="@item.FollowUpQuestions" /></dd><dt>Private preparation notes</dt><dd><MarkdownText Text="@item.PreparationNotes" /></dd><dt>Answer for this interview</dt><dd><MarkdownText Text='@(item.Answer ?? "Not recorded")' /></dd></dl>
+<button type="button" class="icon-action" aria-label="Edit wording / answer" @onclick="()=>editingQuestion=item.Id"><UiIcon Name="edit" /><span class="action-tooltip">Edit wording / answer</span></button>
+@if(!item.IsArchived && !round.IsArchived) { <OperationButton Compact="true" Label="Move question up" Save="@(() => PreparationOperations.MoveQuestionAsync(Id, item.Id, -1))" OnChanged="LoadAsync" /><OperationButton Compact="true" Label="Move question down" Save="@(() => PreparationOperations.MoveQuestionAsync(Id, item.Id, 1))" OnChanged="LoadAsync" /> }
+<OperationButton Compact="true" Confirmation="Only this interview selection changes; source content and history are preserved." Label="@(item.IsArchived ? "Restore question selection" : "Remove question from preparation")" Save="@(() => PreparationOperations.ArchiveQuestionAsync(Id, item.Id, !item.IsArchived))" OnChanged="LoadAsync" />
+</article>
 }
-<h2>STAR experiences</h2>
+</section></div><aside class="entity-column"><section class="card"><div class="section-heading"><h2>STAR experiences</h2>@if(!round.IsArchived){<button type="button" class="icon-action" aria-label="Add experiences" @onclick="()=>showExperiences=true"><UiIcon Name="add" /><span class="action-tooltip">Add experiences</span></button>}</div>
 <p>Library edits update the STAR content here. Rehearsal notes belong only to this interview.</p>
-@if(!round.IsArchived) { <PreparationPicker Label="experiences" Choices="experienceChoices" AlreadySelected="selectedExperiences" ReturnUrl="@Back" OnSave="AddExperiences" /> }
 <label class="checkbox-label"><input type="checkbox" @bind="showRemovedExperiences" /> Show removed experiences</label>
 @if(!experiences.Any(x => x.IsArchived == showRemovedExperiences)) { <p>No @(showRemovedExperiences ? "removed" : "selected") experiences.</p> }
 @foreach(var item in experiences.Where(x => x.IsArchived == showRemovedExperiences))
 {
-<section class="card" @key="@($"experience-{item.Id}")"><h3>@item.ProfessionalExperience.Title</h3><a href="@($"/experiences/{item.ProfessionalExperienceId}")">Source experience</a>
+<article class="preparation-entry" @key="@($"experience-{item.Id}")"><h3>@item.ProfessionalExperience.Title</h3><a href="@($"/experiences/{item.ProfessionalExperienceId}")">Source experience</a>
 @if(item.ProfessionalExperience.IsArchived) { <span class="badge">Source archived</span> }
 <TagBadges Values="item.ProfessionalExperience.Tags.Select(x => x.Tag)" /><ExperienceStory Experience="item.ProfessionalExperience" />
-<h4>Private rehearsal notes for this interview</h4><p class="plain-text">@(item.PreparationNotes ?? "Not added")</p>
-<a class="button" href="@($"/interviews/{Id}/experiences/{item.Id}/edit")">Edit rehearsal notes</a>
-@if(!item.IsArchived && !round.IsArchived) { <OperationButton Label="Move experience up" Save="@(() => PreparationOperations.MoveExperienceAsync(Id, item.Id, -1))" OnChanged="LoadAsync" /><OperationButton Label="Move experience down" Save="@(() => PreparationOperations.MoveExperienceAsync(Id, item.Id, 1))" OnChanged="LoadAsync" /> }
-<OperationButton Label="@(item.IsArchived ? "Restore experience selection" : "Remove experience from preparation")" Save="@(() => PreparationOperations.ArchiveExperienceAsync(Id, item.Id, !item.IsArchived))" OnChanged="LoadAsync" />
-</section>
+<h4>Private rehearsal notes for this interview</h4><MarkdownText Text='@(item.PreparationNotes ?? "Not added")' />
+<button type="button" class="icon-action" aria-label="Edit rehearsal notes" @onclick="()=>editingExperience=item.Id"><UiIcon Name="edit" /><span class="action-tooltip">Edit rehearsal notes</span></button>
+@if(!item.IsArchived && !round.IsArchived) { <OperationButton Compact="true" Label="Move experience up" Save="@(() => PreparationOperations.MoveExperienceAsync(Id, item.Id, -1))" OnChanged="LoadAsync" /><OperationButton Compact="true" Label="Move experience down" Save="@(() => PreparationOperations.MoveExperienceAsync(Id, item.Id, 1))" OnChanged="LoadAsync" /> }
+<OperationButton Compact="true" Confirmation="Only this interview selection changes; source content and history are preserved." Label="@(item.IsArchived ? "Restore experience selection" : "Remove experience from preparation")" Save="@(() => PreparationOperations.ArchiveExperienceAsync(Id, item.Id, !item.IsArchived))" OnChanged="LoadAsync" />
+</article>
 }
+</section></aside></div>
+<UiDialog Open="@showQuestions" Title="Add employer questions" OnCancel="()=>showQuestions=false"><ChildContent><PreparationPicker Choices="choices" AlreadySelected="selectedSources" ReturnUrl="@Back" OnSave="AddQuestions" /></ChildContent></UiDialog>
+<UiDialog Open="@showExperiences" Title="Add STAR experiences" OnCancel="()=>showExperiences=false"><ChildContent><PreparationPicker Label="experiences" Choices="experienceChoices" AlreadySelected="selectedExperiences" ReturnUrl="@Back" OnSave="AddExperiences" /></ChildContent></UiDialog>
+<UiDialog Open="@editingQuestion.HasValue" Title="Edit prepared wording / answer" Size="wide" OnCancel="CloseQuestion"><ChildContent>@if(editingQuestion.HasValue){<ActionLink Href="@($"/interviews/{Id}/questions/{editingQuestion}/edit")" Label="Open full editor" /><PreparedQuestionForm RoundId="Id" Id="editingQuestion.Value" />}</ChildContent></UiDialog>
+<UiDialog Open="@editingExperience.HasValue" Title="Edit private rehearsal notes" Size="wide" OnCancel="CloseExperience"><ChildContent>@if(editingExperience.HasValue){<ActionLink Href="@($"/interviews/{Id}/experiences/{editingExperience}/edit")" Label="Open full editor" /><RehearsalNotesForm RoundId="Id" Id="editingExperience.Value" />}</ChildContent></UiDialog>
 }
 </LoadPanel>
 </div>
 @code {
+    private bool showQuestions, showExperiences;
+    private int? editingQuestion, editingExperience;
+    private async Task CloseQuestion(){editingQuestion=null;await LoadAsync();}
+    private async Task CloseExperience(){editingExperience=null;await LoadAsync();}
     [Parameter] public int Id { get; set; }
     private InterviewRound? round; private bool showRemoved;
     private string? companyName;

@@ -1,0 +1,42 @@
+<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="@Path" /></svg>
+@code {
+    [Parameter] public string Name { get; set; } = "open";
+    private string Path => Name switch
+    {
+        "add" => "M12 5v14M5 12h14",
+        "edit" => "m15 4 5 5M4 20l5-1L21 7l-5-5L4 14v6Z",
+        "download" => "M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5",
+        "upload" => "M12 16V4m-5 5 5-5 5 5M4 16v5h16v-5",
+        "link" => "m9 15 6-6M8 16l-1 1a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m0 12a4 4 0 0 0 6 0l5-5a4 4 0 0 0-6-6l-1 1",
+        "unlink" => "m3 3 18 18M8 16l-1 1a4 4 0 0 1-6-6l4-4m7-1a4 4 0 0 1 6 0l5 5a4 4 0 0 1-6 6",
+        "archive" => "M3 3h18v5H3zM5 8v13h14V8M9 12h6",
+        "restore" => "M4 9a8 8 0 1 1 0 7M4 3v6h6",
+        "check" => "m5 12 4 4L20 5",
+        "close" => "m6 6 12 12M6 18 18 6",
+        "up" => "m5 14 7-7 7 7",
+        "down" => "m5 10 7 7 7-7",
+        "delete" => "M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7",
+        "more" => "M5 12h.01M12 12h.01M19 12h.01",
+        "people" => "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Zm9 14v-2a4 4 0 0 0-3-4m-2-12a4 4 0 0 1 0 8",
+        "workspace" => "M3 4h18v16H3zM10 4v16M3 9h7",
+        "preview" => "M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Zm13 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z",
+        _ => "M14 3h7v7m0-7L10 14M10 3H3v18h18v-7"
+    };
+    public static string ForLabel(string label) => label.ToLowerInvariant() switch
+    {
+        var s when s.Contains("permanent") || s.Contains("delete") => "delete",
+        var s when s.Contains("remove link") || s.Contains("unlink") => "unlink",
+        var s when s.Contains("restore") || s.Contains("reopen") => "restore",
+        var s when s.Contains("archive") => "archive",
+        var s when s.Contains("move") && s.Contains("up") => "up",
+        var s when s.Contains("move") => "down",
+        var s when s.Contains("remove") => "close",
+        var s when s.Contains("edit") => "edit",
+        var s when s.Contains("download") => "download",
+        var s when s.Contains("import") => "upload",
+        var s when s.Contains("attach") || s.Contains("link") => "link",
+        var s when s.Contains("add") || s.Contains("record") => "add",
+        var s when s.Contains("save") || s.Contains("complete") || s.Contains("approve") => "check",
+        _ => "open"
+    };
+}

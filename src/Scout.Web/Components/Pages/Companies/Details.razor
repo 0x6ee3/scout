@@ -25,9 +25,11 @@ else
 {
     <div class="page-heading">
         <div><p class="eyebrow">Company</p><h1>@company.Name</h1><p class="muted">Saved in Scout on this computer.</p></div>
-        <a class="button" href="@CatalogLinks.Record($"/companies/{Id}/edit", ListQuery)">Edit company</a>
+
     </div>
-    <section class="card details-card company-section">
+    <PageActions><ActionLink Href="@CatalogLinks.Record($"/companies/{Id}/edit", ListQuery)" Label="Edit company" /><ArchiveActions IsArchived="company.IsArchived" Subject="company"
+        Explanation="Archiving hides this company from the active company list. Its positions keep their own state and remain linked. You can restore the company at any time."
+        Save="@(archived => Companies.SetArchivedAsync(Id, archived))" OnChanged="LoadAsync" /></PageActions><div class="entity-grid"><aside class="entity-column"><section class="card details-card company-section">
         <h2>Company information</h2><p><a href="@($"/contacts?companyId={Id}")">Company contacts</a> · <a href="@($"/contacts/new?companyId={Id}")">Add contact</a></p>
         @if (company.IsArchived) { <p class="badge">Archived company</p> }
         <dl>
@@ -41,35 +43,28 @@ else
             </dd>
             <dt>Location</dt><dd class="plain-text">@(company.Location ?? "Not added")</dd>
         </dl>
-    </section>
-    <section class="card details-card company-section">
-        <h2>Reference description</h2>
-        @if (company.Description is null) { <p class="muted">No reference description added.</p> }
-        else { <p class="plain-text">@company.Description</p> }
-    </section>
-    <section class="card details-card company-section">
-        <h2>Personal notes</h2>
-        @if (company.PersonalNotes is null) { <p class="muted">No personal notes added.</p> }
-        else { <p class="plain-text">@company.PersonalNotes</p> }
-    </section>
-    <section class="card details-card company-section">
-        <h2>Positions</h2>
-        @if (!company.IsArchived) { <a class="button" href="@($"/positions/new?companyId={Id}")">Add position</a> }
-        else { <p class="muted">Restore this company before adding a position.</p> }
-        @if (positions.Count == 0) { <p class="muted">No positions added yet.</p> }
-        else { <ul class="related-list">@foreach (var item in positions) { <li><a href="@($"/positions/{item.Id}")">@item.Title</a> · @item.Status.DisplayName() @if (item.IsArchived) { <span class="badge">Archived position</span> }</li> }</ul> }
-    </section>
-    <Attachments Kind="Scout.Web.Features.Documents.DocumentOwnerKind.Company" OwnerId="Id" ReturnUrl="@($"/companies/{Id}")" /><ArchiveActions IsArchived="company.IsArchived" Subject="company"
-        Explanation="Archiving hides this company from the active company list. Its positions keep their own state and remain linked. You can restore the company at any time."
-        Save="@(archived => Companies.SetArchivedAsync(Id, archived))" OnChanged="LoadAsync" />
-    <section class="card details-card">
+    </section><section class="card details-card">
         <h2>Record details</h2>
         <dl>
             <dt>Created</dt><dd>@company.CreatedAtUtc.ToLocalTime().ToString("g")</dd>
             <dt>Last updated</dt><dd>@company.UpdatedAtUtc.ToLocalTime().ToString("g")</dd>
             <dt>State</dt><dd>@(company.IsArchived ? "Archived" : "Active")</dd>
         </dl>
-    </section>
+    </section></aside><div class="entity-column"><section class="card details-card company-section">
+        <h2>Reference description</h2>
+        @if (company.Description is null) { <p class="muted">No reference description added.</p> }
+        else { <p class="plain-text">@company.Description</p> }
+    </section><section class="card details-card company-section">
+        <h2>Personal notes</h2>
+        @if (company.PersonalNotes is null) { <p class="muted">No personal notes added.</p> }
+        else { <p class="plain-text">@company.PersonalNotes</p> }
+    </section></div><aside class="entity-column"><section class="card details-card company-section">
+        <h2>Positions</h2>
+        @if (!company.IsArchived) { <ActionLink Href="@($"/positions/new?companyId={Id}")" Label="Add position" /> }
+        else { <p class="muted">Restore this company before adding a position.</p> }
+        @if (positions.Count == 0) { <p class="muted">No positions added yet.</p> }
+        else { <ul class="related-list">@foreach (var item in positions) { <li><a href="@($"/positions/{item.Id}")">@item.Title</a> · @item.Status.DisplayName() @if (item.IsArchived) { <span class="badge">Archived position</span> }</li> }</ul> }
+    </section><Attachments Kind="Scout.Web.Features.Documents.DocumentOwnerKind.Company" OwnerId="Id" ReturnUrl="@($"/companies/{Id}")" /></aside></div>
 }
 
 @code {

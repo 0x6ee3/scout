@@ -3,7 +3,7 @@
 @inject ContactOperations Contacts
 @inject Scout.Web.Features.Companies.CompanyOperations Companies
 @inject NavigationManager Navigation
-<PageTitle>Contacts · Scout</PageTitle><h1>Contacts</h1><a class="button" href="@CatalogLinks.Record("/contacts/new", Query)">Add contact</a>
+<PageTitle>Contacts · Scout</PageTitle><h1>Contacts</h1><ActionLink Href="@CatalogLinks.Record("/contacts/new", Query)" Label="Add contact" />
 <form method="get" action="/contacts" class="filter-form"><label>Search contacts <input name="q" value="@Q" /></label><label>Company <select name="companyId"><option value="">All companies</option>@foreach(var c in companies){<option value="@c.Id" selected="@(CompanyId==c.Id)">@c.Name</option>}</select></label><label>Archive <select name="archive" value="@Archive">@foreach (var x in Enum.GetValues<ArchiveFilter>()) { <option value="@x" selected="@((CatalogLinks.ParseEnum<ArchiveFilter>(Archive)??ArchiveFilter.Active)==x)">@x</option> }</select></label><button>Apply filters</button><a href="/contacts">Clear</a></form>
 <LoadPanel Load="LoadAsync" LoadKey="@Navigation.Uri">@if (rows.Count == 0) { <p>No contacts match.</p> }<div class="record-list">@foreach (var c in rows) { <article class="card details-card company-section"><h2><a href="@CatalogLinks.Record($"/contacts/{c.Id}", Query)">@c.Name</a></h2><p>@c.CompanyName · @c.Role · @c.Email @(c.IsArchived ? "· Archived" : "")</p></article> }</div></LoadPanel>
 @code {

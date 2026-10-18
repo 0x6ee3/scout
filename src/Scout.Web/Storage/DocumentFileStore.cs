@@ -7,6 +7,9 @@ namespace Scout.Web.Storage;
 public sealed partial class DocumentFileStore(StoragePaths paths)
 {
     public const long MaximumBytes = 50L * 1024 * 1024;
+    public const long MaximumAudioBytes = 1024L * 1024 * 1024;
+    public static bool IsAudio(string extension) => extension.ToLowerInvariant() is ".mp3" or ".wav" or ".m4a";
+    public static long LimitFor(string name) => IsAudio(Path.GetExtension(name)) ? MaximumAudioBytes : MaximumBytes;
     public const int PreviewBytes = 256 * 1024;
     private static readonly IReadOnlyDictionary<string, string> Types = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
@@ -77,8 +80,8 @@ public sealed partial class DocumentFileStore(StoragePaths paths)
                 int count;
                 while ((count = await input.ReadAsync(buffer, cancellationToken)) != 0)
                 {
-                    if (size + count > MaximumBytes)
-                        throw new IOException("The file exceeds the 50 MiB import limit.");
+                    if (size + count > LimitFor(originalName))
+                        throw new IOException("The file exceeds its import limit (1 GiB audio; 50 MiB other files).");
                     var take = Math.Min(5 - headerCount, count);
                     buffer.AsSpan(0, take).CopyTo(header.AsSpan(headerCount));
                     headerCount += take;
@@ -109,7 +112,7 @@ public sealed partial class DocumentFileStore(StoragePaths paths)
     {
         var path = Resolve(document.StoredRelativePath);
         var extension = Path.GetExtension(path);
-        if (document.ContentType != MimeFor(extension) || document.Size is < 1 or > MaximumBytes)
+        if (document.ContentType != MimeFor(extension) || document.Size < 1 || document.Size > LimitFor(path))
             throw new IOException("The stored document metadata is invalid.");
         var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);
         try

@@ -28,6 +28,9 @@ builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddDbContextFactory<ScoutDbContext>((services, options) =>
     options.UseSqlite(ScoutDatabase.ConnectionString(services.GetRequiredService<StoragePaths>())));
 builder.Services.AddSingleton<DocumentFileStore>();
+builder.Services.AddSingleton<LinkedRecordingStore>();
+builder.Services.AddScoped<Scout.Web.Features.InterviewRecordings.RecordingOperations>();
+builder.Services.AddScoped<Scout.Web.Features.InterviewTranscripts.TranscriptOperations>();
 builder.Services.AddScoped<DocumentOperations>();
 builder.Services.AddScoped<Scout.Web.Features.Cvs.CvOperations>();
 builder.Services.AddScoped<Scout.Web.Features.Submissions.SubmissionOperations>();
@@ -88,6 +91,8 @@ app.UseWhen(context => !context.Request.Path.Value!.Contains("/workspace", Strin
 app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapDocumentEndpoints();
+Scout.Web.Features.InterviewRecordings.RecordingFileEndpoints.MapRecordingFileEndpoints(app);
+Scout.Web.Features.InterviewTranscripts.TranscriptEndpoints.MapTranscriptEndpoints(app);
 Scout.Web.Features.InterviewWorkspace.WorkspaceFileEndpoints.MapWorkspaceFileEndpoints(app);
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 

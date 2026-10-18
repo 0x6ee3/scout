@@ -1,0 +1,14 @@
+@if(!string.IsNullOrEmpty(Text)){
+<div class="markdown-text">
+<button type="button" class="secondary" aria-pressed="@plain.ToString().ToLowerInvariant()" @onclick="()=>plain=!plain"><UiIcon Name="preview" />@(plain ? "Formatted view" : "Plain-text view")</button>
+@if(plain){<div class="plain-text">@Text</div>}else{
+@if(rendered.PlainTextFallback){<p>Showing plain text because this content exceeds the formatting budget.</p>}
+@((MarkupString)rendered.Html)
+}
+</div>
+}
+@code {
+    [Parameter]public string? Text{get;set;}
+    private string? previous;private bool plain;private Scout.Web.Formatting.MarkdownResult rendered=new("",false);
+    protected override void OnParametersSet(){if(previous!=Text){previous=Text;rendered=Scout.Web.Formatting.MarkdownRenderer.Render(Text);}}
+}

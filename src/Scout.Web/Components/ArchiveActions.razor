@@ -1,11 +1,8 @@
 @inject ILogger<ArchiveActions> Logger
 
-<section class="card details-card company-section" aria-label="Archive controls">
-    <h2>@(IsArchived ? "Restore this " : "Archive this ")@Subject</h2>
-    <p>@Explanation</p>
-    @if (error is not null) { <p class="message error" role="alert">@error</p> }
-    <button disabled="@busy" @onclick="ChangeAsync">@(busy ? "Saving…" : IsArchived ? $"Restore {Subject}" : $"Archive {Subject}")</button>
-</section>
+<details class="action-menu"><summary><UiIcon Name="more" /> More<span class="visually-hidden"> actions for @Subject</span></summary><div class="action-menu-items"><button type="button" class="secondary" disabled="@busy" @onclick="()=>confirm=true"><UiIcon Name="@(IsArchived ? "restore" : "archive")" />@(IsArchived ? $"Restore {Subject}" : $"Archive {Subject}")</button></div></details>
+<UiDialog Open="@confirm" Title="@($"{(IsArchived ? "Restore" : "Archive")} {Subject}?")" Busy="@busy" OnCancel="()=>confirm=false"><ChildContent><p>@Explanation</p>@if(error is not null){<p class="message error" role="alert">@error</p>}</ChildContent><Footer><button type="button" disabled="@busy" @onclick="()=>confirm=false">Cancel</button><button type="button" class="secondary" disabled="@busy" @onclick="ChangeAsync">@(busy ? "Saving…" : IsArchived ? $"Restore {Subject}" : $"Archive {Subject}")</button></Footer></UiDialog>
+<UiDialog Open="@saved" Title="Changes saved" OnCancel="()=>saved=false"><ChildContent><p>The archive state was saved. Existing history and files are preserved.</p></ChildContent><Footer><button type="button" @onclick="()=>saved=false">Done</button></Footer></UiDialog>
 
 @code {
     [Parameter] public bool IsArchived { get; set; }
@@ -13,7 +10,7 @@
     [Parameter, EditorRequired] public string Explanation { get; set; } = string.Empty;
     [Parameter, EditorRequired] public Func<bool, Task<bool>> Save { get; set; } = default!;
     [Parameter] public EventCallback OnChanged { get; set; }
-    private bool busy;
+    private bool busy, confirm, saved;
     private string? error;
 
     private async Task ChangeAsync()
@@ -23,7 +20,7 @@
         error = null;
         try
         {
-            if (await Save(!IsArchived)) await OnChanged.InvokeAsync();
+            if (await Save(!IsArchived)) { confirm = false; await OnChanged.InvokeAsync(); saved=true; }
             else error = "This record no longer exists. Return to the list to find an existing record.";
         }
         catch (System.ComponentModel.DataAnnotations.ValidationException ex) { error = ex.Message; }

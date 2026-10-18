@@ -1,8 +1,13 @@
 @using System.ComponentModel.DataAnnotations
 @inject ILogger<OperationButton> Logger
-<button type="button" disabled="@busy" @onclick="RunAsync">@(busy?"Saving…":Label)</button>@if(error is not null){<p class="message error" role="alert">@error</p>}
+<button type="button" class="@(Compact ? "icon-action" : "secondary")" aria-label="@(Compact ? Label : null)" disabled="@busy" @onclick="Begin"><UiIcon Name="@(Icon ?? UiIcon.ForLabel(Label))" />@if(Compact){<span class="action-tooltip">@Label</span>}else{<span>@(busy?"Saving…":Label)</span>}</button>@if(error is not null){<p class="message error" role="alert">@error</p>}
+<UiDialog Open="@confirm" Title="@Label" Busy="@busy" OnCancel="()=>confirm=false"><ChildContent><p>@Confirmation</p>@if(error is not null){<p class="message error" role="alert">@error</p>}</ChildContent><Footer><button type="button" disabled="@busy" @onclick="()=>confirm=false">Cancel</button><button type="button" class="secondary" disabled="@busy" @onclick="RunAsync">@(busy?"Saving…":Label)</button></Footer></UiDialog>
+<UiDialog Open="@saved" Title="Changes saved" OnCancel="()=>saved=false"><ChildContent><p>The change was saved.</p></ChildContent><Footer><button @onclick="()=>saved=false">Done</button></Footer></UiDialog>
 @code {
     [Parameter]public string Label{get;set;}="Save";[Parameter,EditorRequired]public Func<Task<bool>> Save{get;set;}=default!;[Parameter]public EventCallback OnChanged{get;set;}
-    private bool busy;private string? error;
-    private async Task RunAsync(){if(busy)return;busy=true;error=null;try{if(await Save())await OnChanged.InvokeAsync();else error="The record no longer exists.";}catch(ValidationException ex){error=ex.Message;}catch(Exception ex)when(ex is Microsoft.EntityFrameworkCore.DbUpdateException or Microsoft.Data.Sqlite.SqliteException or IOException or UnauthorizedAccessException){Logger.LogError(ex,"Could not save action.");error="The change could not be saved. Try again; saved data is preserved.";}finally{busy=false;}}
+    [Parameter]public bool Compact{get;set;} [Parameter]public string? Icon{get;set;} [Parameter]public string? Confirmation{get;set;}
+    [CascadingParameter(Name="DialogOwner")]public UiDialog? DialogOwner{get;set;}
+    private bool busy,confirm,saved;private string? error;
+    private Task Begin(){if(Confirmation is not null){error=null;confirm=true;return Task.CompletedTask;}return RunAsync();}
+    private async Task RunAsync(){if(busy)return;busy=true;error=null;DialogOwner?.SetBusy(true);try{if(await Save()){confirm=false;await OnChanged.InvokeAsync();saved=Confirmation is not null;}else error="The record no longer exists.";}catch(ValidationException ex){error=ex.Message;}catch(Exception ex)when(ex is Microsoft.EntityFrameworkCore.DbUpdateException or Microsoft.Data.Sqlite.SqliteException or IOException or UnauthorizedAccessException){Logger.LogError(ex,"Could not save action.");error="The change could not be saved. Try again; saved data is preserved.";}finally{busy=false;DialogOwner?.SetBusy(false);}}
 }

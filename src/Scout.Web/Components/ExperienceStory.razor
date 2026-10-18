@@ -1,9 +1,17 @@
-<p class="plain-text">@(Experience.MemoryCue ?? "No memory cue added")</p>
+@if (Columns)
+{
+<div class="entity-grid"><section class="card details-card"><h2>Situation and task</h2><MarkdownText Text="@Experience.MemoryCue" /><h3>Situation</h3><MarkdownText Text="@Experience.Situation" /><h3>Task</h3><MarkdownText Text="@Experience.Task" /></section><section class="card details-card"><h2>Action and result</h2><h3>Action</h3><MarkdownText Text="@Experience.Action" /><h3>Result</h3><MarkdownText Text="@Experience.Result" /></section><section class="card details-card"><h2>Reflection and context</h2><MarkdownText Text="@Experience.Reflection" /><h3>Useful for / likely prompts</h3><MarkdownText Text="@Experience.UsefulFor" /><h3>Private library notes</h3><MarkdownText Text="@Experience.Notes" /></section></div>
+}
+else
+{
+<MarkdownText Text='@(Experience.MemoryCue ?? "No memory cue added")' />
 <details><summary>Expand STAR and notes</summary>
 <dl>
-@foreach(var field in Fields) { <dt>@field.Label</dt><dd class="plain-text">@(field.Text ?? "Not added")</dd> }
+@foreach(var field in Fields) { <dt>@field.Label</dt><dd><MarkdownText Text='@(field.Text ?? "Not added")' /></dd> }
 </dl></details>
+}
 @code {
     [Parameter, EditorRequired] public ProfessionalExperience Experience { get; set; } = default!;
+    [Parameter] public bool Columns { get; set; }
     private (string Label, string? Text)[] Fields => [("Situation", Experience.Situation), ("Task", Experience.Task), ("Action", Experience.Action), ("Result", Experience.Result), ("Reflection", Experience.Reflection), ("Useful for / likely prompts", Experience.UsefulFor), ("Private library notes", Experience.Notes)];
 }

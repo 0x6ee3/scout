@@ -4,7 +4,7 @@
 @inject TagOperations TagOperations
 @inject NavigationManager Navigation
 <PageTitle>STAR experiences · Scout</PageTitle>
-<div class="page-heading"><div><h1>STAR experiences</h1><p>Your reusable personal examples. Partial STAR entries are welcome.</p></div><a class="button" href="@CatalogLinks.Record("/experiences/new", Query)">Add experience</a></div>
+<div class="page-heading"><div><h1>STAR experiences</h1><p>Your reusable personal examples. Partial STAR entries are welcome.</p></div><ActionLink Href="@CatalogLinks.Record("/experiences/new", Query)" Label="Add experience" /></div>
 <form method="get" action="/experiences" class="card catalog-filters" role="search">
 <div class="field"><label for="q">Search experiences</label><input id="q" name="q" value="@Search" /></div>
 <div class="field"><label for="tag">Tag</label><select id="tag" name="tag"><option value="">All tags</option>@foreach(var tag in tags) { <option value="@tag" selected="@(Tag == tag)">@tag</option> }</select></div>

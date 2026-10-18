@@ -1,0 +1,16 @@
+@inject Scout.Web.Storage.DocumentFileStore Files
+@inject Scout.Web.Storage.LinkedRecordingStore Links
+@inject IDbContextFactory<Scout.Web.Data.ScoutDbContext> Factory
+@if(available){
+<audio aria-label="@($"{Recording.OriginalName} · recording #{Recording.Id}")" controls preload="none" src="@Url("media")" @onerror="()=>failed=true">Your browser does not support audio playback.</audio>
+<p><a href="@Url("download")" download>Download verified recording</a></p>
+@if(failed){<p role="status">Playback failed. This browser may not support the codec, or the file is unavailable. Try the verified download or reopen this interview.</p>}
+}else{<p role="status">Recording unavailable. Check the original file or restore a backup, then reopen this interview.</p>}
+@code {
+    [Parameter, EditorRequired] public InterviewRecording Recording { get; set; } = default!;
+    [Parameter] public int RoundId { get; set; }
+    private bool available, failed;
+    private int? checkedId;
+    private string Url(string action)=>$"/interviews/{RoundId}/recordings/{Recording.Id}/{action}";
+    protected override async Task OnParametersSetAsync(){if(checkedId==Recording.Id)return;checkedId=Recording.Id;available=false;try{if(Recording.StorageKind==RecordingStorage.LinkedWorkingFile){await using var stream=await Links.OpenVerifiedAsync(Recording);}else{await using var db=await Factory.CreateDbContextAsync();var doc=await db.Documents.SingleAsync(x=>x.Id==Recording.DocumentId);await using var stream=await Files.OpenVerifiedAsync(doc);}available=true;}catch(Exception ex) when(ex is IOException or UnauthorizedAccessException or InvalidOperationException){}}
+}

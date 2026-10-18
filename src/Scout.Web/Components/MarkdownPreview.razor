@@ -1,0 +1,7 @@
+<button type="button" class="secondary markdown-preview" @onclick="Show"><UiIcon Name="preview" /> Preview formatting</button>
+@if(preview is not null){<MarkdownText Text="@preview" />}
+@code {
+    [Parameter]public string? Text{get;set;}
+    private string? preview;
+    private void Show()=>preview=Text??"";
+}

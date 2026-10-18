@@ -7,7 +7,7 @@
 <PageTitle>Companies · Scout</PageTitle>
 <div class="page-heading">
     <div><p class="eyebrow">Your job search</p><h1>Companies</h1><p class="muted">Keep the employers you’re interested in together.</p></div>
-    <a class="button" href="/companies/new">Add company</a>
+    <ActionLink Href="/companies/new" Label="Add company" />
 </div>
 <form method="get" action="/companies" class="card catalog-filters" role="search" aria-label="Find companies">
     <div class="filter-field search-field"><label for="search">Search companies</label><input id="search" name="q" value="@Search" placeholder="Name or location" /></div>
@@ -21,7 +21,7 @@
 else if (items is null) { <p role="status">Loading companies…</p> }
 else if (items.Count == 0)
 {
-    <section class="card empty-state"><h2>No companies in this view</h2><p>Reset the filters to see active companies, or add a company to get started.</p><div class="empty-actions"><a href="/companies">Reset filters</a><a class="button" href="/companies/new">Add company</a></div></section>
+    <section class="card empty-state"><h2>No companies in this view</h2><p>Reset the filters to see active companies, or add a company to get started.</p><div class="empty-actions"><a href="/companies">Reset filters</a><ActionLink Href="/companies/new" Label="Add company" /></div></section>
 }
 else
 {

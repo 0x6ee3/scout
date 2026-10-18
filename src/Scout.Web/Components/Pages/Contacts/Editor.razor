@@ -1,33 +1,5 @@
 @page "/contacts/new"
 @page "/contacts/{Id:int}/edit"
-@using Scout.Web.Features.Contacts
-@inject ContactOperations Contacts
-@inject Scout.Web.Features.Companies.CompanyOperations Companies
-<PageTitle>Contact · Scout</PageTitle><h1>@(Id.HasValue ? "Edit contact" : "Add contact")</h1>
-<LoadPanel Load="LoadAsync" LoadKey="@($"{Id}/{CompanyId}")">
-@if (missing) { <p>Contact not found.</p> } else {
-<DraftForm Model="@model" Save="SaveAsync" CancelUrl="@Back" SaveLabel="Save contact" FormName="ContactEditor">
-@if (Id.HasValue) { <p>Company: @companyName. Contact history stays with this company.</p> } else { <div class="field"><label for="company">Company (required)</label><InputSelect id="company" @bind-Value="model.CompanyId"><option value="0">Choose a company</option>@foreach(var c in companies) { <option value="@c.Id">@c.Name</option> }</InputSelect></div> }
-<div class="field"><label for="name">Name (required)</label><InputText id="name" @bind-Value="model.Name" maxlength="200" /></div>
-<div class="field"><label for="role">Role</label><InputText id="role" @bind-Value="model.Role" maxlength="200" /></div>
-<div class="field"><label for="email">Email</label><InputText id="email" @bind-Value="model.Email" maxlength="320" /></div>
-<div class="field"><label for="phone">Phone</label><InputText id="phone" @bind-Value="model.Phone" maxlength="100" /></div>
-<div class="field"><label for="profile">Profile URL</label><InputText id="profile" @bind-Value="model.ProfileUrl" maxlength="2048" /></div>
-<div class="field"><label for="notes">Notes</label><InputTextArea id="notes" @bind-Value="model.Notes" maxlength="100000" /></div>
-</DraftForm> }
-</LoadPanel>
-@code {
-    [Parameter] public int? Id { get; set; }
-    [SupplyParameterFromQuery] public int? CompanyId { get; set; }
-    [SupplyParameterFromQuery] public string? ListQuery { get; set; }
-    private ContactEditModel model = new(); private bool missing; private string? companyName;
-    private IReadOnlyList<Scout.Web.Features.Companies.CompanyListItem> companies = [];
-    private string Back => Id.HasValue ? CatalogLinks.Record($"/contacts/{Id}", ListQuery) : CatalogLinks.List("/contacts", ListQuery);
-    private async Task LoadAsync() {
-        missing = false;
-        if (Id.HasValue) { var c = await Contacts.GetAsync(Id.Value); missing = c is null; if (c is not null) { companyName = c.Company.Name; model = new() { CompanyId = c.CompanyId, Name = c.Name, Role = c.Role, Email = c.Email, Phone = c.Phone, ProfileUrl = c.ProfileUrl, Notes = c.Notes }; } }
-        else { model = new() { CompanyId = CompanyId ?? 0 }; companies = await Companies.ListAsync(); }
-    }
-    private async Task<string> SaveAsync() => CatalogLinks.Record($"/contacts/{await Contacts.SaveAsync(Id, model)}", ListQuery);
-}
-
+<PageTitle>contact · Scout</PageTitle><h1>@(Id.HasValue ? "Edit contact" : "Add contact")</h1>
+<ContactEditorForm Id="Id" CompanyId="CompanyId" ListQuery="@ListQuery" />
+@code { [Parameter] public int? Id {get;set;} [SupplyParameterFromQuery] public int? CompanyId {get;set;} [SupplyParameterFromQuery] public string? ListQuery {get;set;} }

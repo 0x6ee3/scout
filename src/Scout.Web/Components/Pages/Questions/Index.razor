@@ -4,7 +4,7 @@
 @inject TagOperations TagOperations
 @inject NavigationManager Navigation
 <PageTitle>Employer questions · Scout</PageTitle>
-<div class="page-heading"><div><h1>Employer questions</h1><p>Reusable questions. Answers belong to individual interviews.</p></div><a class="button" href="@CatalogLinks.Record("/questions/new", Query)">Add question</a></div>
+<div class="page-heading"><div><h1>Employer questions</h1><p>Reusable questions. Answers belong to individual interviews.</p></div><ActionLink Href="@CatalogLinks.Record("/questions/new", Query)" Label="Add question" /></div>
 <form method="get" action="/questions" class="card catalog-filters" role="search">
     <div class="field"><label for="q">Search questions</label><input id="q" name="q" value="@Search" /></div>
     <div class="field"><label for="tag">Tag</label><select id="tag" name="tag"><option value="">All tags</option>@foreach(var tag in tags) { <option value="@tag" selected="@(Tag == tag)">@tag</option> }</select></div>

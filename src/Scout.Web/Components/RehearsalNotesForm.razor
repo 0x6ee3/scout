@@ -1,0 +1,19 @@
+@using Scout.Web.Features.InterviewPreparation
+@inject PreparationOperations PreparationOperations
+
+<LoadPanel Load="LoadAsync" LoadKey="@($"{RoundId}/{Id}")">
+@if(row is null) { <p>Selected experience not found in this interview.</p> } else {
+<h2>@row.ProfessionalExperience.Title</h2><ExperienceStory Experience="row.ProfessionalExperience" />
+<DraftForm Model="@model" Save="SaveAsync" CancelUrl="@Back" SaveLabel="Save rehearsal notes" FormName="RehearsalNotes">
+<div class="field"><label for="notes">Private rehearsal notes for this interview</label><InputTextArea id="notes" @bind-Value="model.PreparationNotes" maxlength="100000" /><MarkdownPreview Text="@model.PreparationNotes" /></div>
+</DraftForm> }
+</LoadPanel>
+@code {
+    [Parameter] public int RoundId { get; set; }
+    [Parameter] public int Id { get; set; }
+    private InterviewExperience? row;
+    private ExperiencePreparationEditModel model = new();
+    private string Back => $"/interviews/{RoundId}/preparation";
+    private async Task LoadAsync() { row = (await PreparationOperations.ExperiencesAsync(RoundId)).SingleOrDefault(x => x.Id == Id); if(row is not null) model = new() { PreparationNotes = row.PreparationNotes }; StateHasChanged(); }
+    private async Task<string> SaveAsync() { await PreparationOperations.SaveExperienceAsync(RoundId, Id, model); return Back; }
+}

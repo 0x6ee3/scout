@@ -1,0 +1,570 @@
+{
+  "browser": "155.0.4283.45",
+  "environment": "Headless Edge; CSS viewport emulation; deviceScaleFactor 1; physical OS scale unknown",
+  "sizes": [
+    {
+      "viewportWidth": 3840,
+      "viewportHeight": 2160,
+      "columns": "973.25px 1545.75px 1145px",
+      "gridWidth": 3712,
+      "scrollWidth": 3712,
+      "visibleChildren": 3
+    },
+    {
+      "viewportWidth": 2560,
+      "viewportHeight": 1440,
+      "columns": "633.25px 1005.75px 745px",
+      "gridWidth": 2432,
+      "scrollWidth": 2432,
+      "visibleChildren": 3
+    },
+    {
+      "viewportWidth": 1920,
+      "viewportHeight": 1080,
+      "columns": "471.75px 749.25px 555px",
+      "gridWidth": 1824,
+      "scrollWidth": 1824,
+      "visibleChildren": 3
+    },
+    {
+      "viewportWidth": 720,
+      "viewportHeight": 1100,
+      "columns": "648px",
+      "gridWidth": 648,
+      "scrollWidth": 648,
+      "visibleChildren": 3
+    }
+  ],
+  "checks": [
+    "Editor discard dialog retains draft on Keep editing",
+    "Editor failure shows no success and retains draft",
+    "Explicit save acknowledgment",
+    "Dirty modal Escape preserves inputs through Keep editing",
+    "Dialog failure retains inputs and cancel/discard works",
+    "Central unlink confirmation; cancel and focus return",
+    "All three screens, populated/sparse/long-name and three layout variants rendered",
+    "Dark appearance rendered"
+  ],
+  "matrix": [
+    {
+      "width": 3840,
+      "screen": "application",
+      "state": "Populated",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "973.25px 1545.75px 1145px",
+          "gridWidth": 3712,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1545.75px 1145px 973.25px",
+          "gridWidth": 3712,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 3840,
+      "screen": "application",
+      "state": "Sparse",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "973.25px 1545.75px 1145px",
+          "gridWidth": 3712,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1545.75px 1145px 973.25px",
+          "gridWidth": 3712,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 3840,
+      "screen": "application",
+      "state": "Long names",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "973.25px 1545.75px 1145px",
+          "gridWidth": 3712,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1545.75px 1145px 973.25px",
+          "gridWidth": 3712,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 3840,
+      "screen": "preparation",
+      "state": "Populated",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "973.25px 1545.75px 1145px",
+          "gridWidth": 3712,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1545.75px 1145px 973.25px",
+          "gridWidth": 3712,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 3840,
+      "screen": "preparation",
+      "state": "Sparse",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "973.25px 1545.75px 1145px",
+          "gridWidth": 3712,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1545.75px 1145px 973.25px",
+          "gridWidth": 3712,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 3840,
+      "screen": "preparation",
+      "state": "Long names",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "973.25px 1545.75px 1145px",
+          "gridWidth": 3712,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1545.75px 1145px 973.25px",
+          "gridWidth": 3712,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 3840,
+      "screen": "editor",
+      "state": "Populated",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "973.25px 1545.75px 1145px",
+          "gridWidth": 3712,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1545.75px 1145px 973.25px",
+          "gridWidth": 3712,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 3840,
+      "screen": "editor",
+      "state": "Sparse",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "973.25px 1545.75px 1145px",
+          "gridWidth": 3712,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1545.75px 1145px 973.25px",
+          "gridWidth": 3712,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 3840,
+      "screen": "editor",
+      "state": "Long names",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "973.25px 1545.75px 1145px",
+          "gridWidth": 3712,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1545.75px 1145px 973.25px",
+          "gridWidth": 3712,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 2560,
+      "screen": "application",
+      "state": "Populated",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "633.25px 1005.75px 745px",
+          "gridWidth": 2432,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1005.75px 745px 633.25px",
+          "gridWidth": 2432,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 2560,
+      "screen": "application",
+      "state": "Sparse",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "633.25px 1005.75px 745px",
+          "gridWidth": 2432,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1005.75px 745px 633.25px",
+          "gridWidth": 2432,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 2560,
+      "screen": "application",
+      "state": "Long names",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "633.25px 1005.75px 745px",
+          "gridWidth": 2432,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1005.75px 745px 633.25px",
+          "gridWidth": 2432,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 2560,
+      "screen": "preparation",
+      "state": "Populated",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "633.25px 1005.75px 745px",
+          "gridWidth": 2432,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1005.75px 745px 633.25px",
+          "gridWidth": 2432,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 2560,
+      "screen": "preparation",
+      "state": "Sparse",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "633.25px 1005.75px 745px",
+          "gridWidth": 2432,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1005.75px 745px 633.25px",
+          "gridWidth": 2432,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 2560,
+      "screen": "preparation",
+      "state": "Long names",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "633.25px 1005.75px 745px",
+          "gridWidth": 2432,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1005.75px 745px 633.25px",
+          "gridWidth": 2432,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 2560,
+      "screen": "editor",
+      "state": "Populated",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "633.25px 1005.75px 745px",
+          "gridWidth": 2432,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1005.75px 745px 633.25px",
+          "gridWidth": 2432,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 2560,
+      "screen": "editor",
+      "state": "Sparse",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "633.25px 1005.75px 745px",
+          "gridWidth": 2432,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1005.75px 745px 633.25px",
+          "gridWidth": 2432,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 2560,
+      "screen": "editor",
+      "state": "Long names",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "633.25px 1005.75px 745px",
+          "gridWidth": 2432,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "1005.75px 745px 633.25px",
+          "gridWidth": 2432,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 1920,
+      "screen": "application",
+      "state": "Populated",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "471.75px 749.25px 555px",
+          "gridWidth": 1824,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "749.25px 555px 471.75px",
+          "gridWidth": 1824,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 1920,
+      "screen": "application",
+      "state": "Sparse",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "471.75px 749.25px 555px",
+          "gridWidth": 1824,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "749.25px 555px 471.75px",
+          "gridWidth": 1824,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 1920,
+      "screen": "application",
+      "state": "Long names",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "471.75px 749.25px 555px",
+          "gridWidth": 1824,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "749.25px 555px 471.75px",
+          "gridWidth": 1824,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 1920,
+      "screen": "preparation",
+      "state": "Populated",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "471.75px 749.25px 555px",
+          "gridWidth": 1824,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "749.25px 555px 471.75px",
+          "gridWidth": 1824,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 1920,
+      "screen": "preparation",
+      "state": "Sparse",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "471.75px 749.25px 555px",
+          "gridWidth": 1824,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "749.25px 555px 471.75px",
+          "gridWidth": 1824,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 1920,
+      "screen": "preparation",
+      "state": "Long names",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "471.75px 749.25px 555px",
+          "gridWidth": 1824,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "749.25px 555px 471.75px",
+          "gridWidth": 1824,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 1920,
+      "screen": "editor",
+      "state": "Populated",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "471.75px 749.25px 555px",
+          "gridWidth": 1824,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "749.25px 555px 471.75px",
+          "gridWidth": 1824,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 1920,
+      "screen": "editor",
+      "state": "Sparse",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "471.75px 749.25px 555px",
+          "gridWidth": 1824,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "749.25px 555px 471.75px",
+          "gridWidth": 1824,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "width": 1920,
+      "screen": "editor",
+      "state": "Long names",
+      "measurements": [
+        {
+          "variant": "Work centered",
+          "columns": "471.75px 749.25px 555px",
+          "gridWidth": 1824,
+          "overflow": false
+        },
+        {
+          "variant": "Work first",
+          "columns": "749.25px 555px 471.75px",
+          "gridWidth": 1824,
+          "overflow": false
+        }
+      ]
+    }
+  ],
+  "dialog": {
+    "x": 1600,
+    "y": 688.78125,
+    "width": 640,
+    "height": 223.4375
+  },
+  "pageErrors": []
+}

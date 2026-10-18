@@ -1,0 +1,22 @@
+@using Scout.Web.Features.InterviewPreparation
+@inject PreparationOperations PreparationOperations
+<p>Changes belong only to this interview. Save explicitly; drafts do not survive reload or backend shutdown.</p>
+<LoadPanel Load="LoadAsync" LoadKey="@($"{RoundId}/{Id}")">
+@if(missing) { <p>Prepared question not found in this interview.</p> } else {
+<DraftForm Model="@model" Save="SaveAsync" CancelUrl="@Back" SaveLabel="Save prepared question" FormName="PreparedQuestionEditor">
+<div class="field"><label for="text">Prepared question (required)</label><InputTextArea id="text" @bind-Value="model.Text" maxlength="4000" /><MarkdownPreview Text="@model.Text" /></div>
+<div class="field"><label for="intent">Intent</label><InputTextArea id="intent" @bind-Value="model.Intent" maxlength="100000" /><MarkdownPreview Text="@model.Intent" /></div>
+<div class="field"><label for="follow">Suggested follow-ups</label><InputTextArea id="follow" @bind-Value="model.FollowUpQuestions" maxlength="100000" /><MarkdownPreview Text="@model.FollowUpQuestions" /></div>
+<div class="field"><label for="notes">Private preparation notes</label><InputTextArea id="notes" @bind-Value="model.PreparationNotes" maxlength="100000" /><MarkdownPreview Text="@model.PreparationNotes" /></div>
+<p>When enabled in an approved Workspace, this live answer is visible there. Concurrent edits require review before saving.</p>
+<div class="field"><label for="answer">Answer for this interview</label><InputTextArea id="answer" @bind-Value="model.Answer" maxlength="100000" /><MarkdownPreview Text="@model.Answer" /></div>
+</DraftForm> }
+</LoadPanel>
+@code {
+    [Parameter] public int RoundId { get; set; }
+    [Parameter] public int Id { get; set; }
+    private PreparedQuestionEditModel model = new(); private bool missing;
+    private string Back => $"/interviews/{RoundId}/preparation";
+    private async Task LoadAsync() { var row = (await PreparationOperations.QuestionsAsync(RoundId)).SingleOrDefault(x => x.Id == Id); missing = row is null; if(row is not null) model = new() { ContentRevision = row.ContentRevision, Text = row.Text, Intent = row.Intent, FollowUpQuestions = row.FollowUpQuestions, PreparationNotes = row.PreparationNotes, Answer = row.Answer }; StateHasChanged(); }
+    private async Task<string> SaveAsync() { await PreparationOperations.SaveQuestionAsync(RoundId, Id, model); return Back; }
+}

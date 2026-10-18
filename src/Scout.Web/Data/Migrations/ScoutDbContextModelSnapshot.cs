@@ -543,6 +543,101 @@ namespace Scout.Web.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Scout.Web.Domain.InterviewRecording", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ArchivedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ConsentDecisionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("DocumentId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("InterviewRoundId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("OriginalName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PayloadHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("RegistrationToken")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Sha256")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("StorageKind")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("WorkingRelativePath")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentId");
+
+                    b.HasIndex("InterviewRoundId");
+
+                    b.HasIndex("RegistrationToken")
+                        .IsUnique();
+
+                    b.HasIndex("ConsentDecisionId", "InterviewRoundId");
+
+                    b.ToTable("Recordings", t =>
+                        {
+                            t.HasCheckConstraint("CK_Recording_Source", "(StorageKind = 0 AND DocumentId IS NOT NULL AND WorkingRelativePath IS NULL) OR (StorageKind = 1 AND DocumentId IS NULL AND WorkingRelativePath IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Scout.Web.Domain.InterviewRecordingDecision", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AcknowledgedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Choice")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("InterviewRoundId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PrivateNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InterviewRoundId");
+
+                    b.ToTable("RecordingDecisions");
+                });
+
             modelBuilder.Entity("Scout.Web.Domain.InterviewRound", b =>
                 {
                     b.Property<int>("Id")
@@ -605,6 +700,68 @@ namespace Scout.Web.Data.Migrations
                     b.ToTable("Interviews", (string)null);
                 });
 
+            modelBuilder.Entity("Scout.Web.Domain.InterviewTranscript", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ArchivedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("InterviewRoundId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Origin")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("OriginalDocumentId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ParentTranscriptId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PayloadHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("RecordingId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Sha256")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("SubmissionToken")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(1000000)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InterviewRoundId");
+
+                    b.HasIndex("OriginalDocumentId");
+
+                    b.HasIndex("SubmissionToken")
+                        .IsUnique();
+
+                    b.HasIndex("ParentTranscriptId", "InterviewRoundId");
+
+                    b.HasIndex("RecordingId", "InterviewRoundId");
+
+                    b.ToTable("Transcripts", t =>
+                        {
+                            t.HasCheckConstraint("CK_Transcript_Origin", "(Origin = 0 AND OriginalDocumentId IS NOT NULL AND ParentTranscriptId IS NULL) OR (Origin = 1 AND ParentTranscriptId IS NOT NULL)");
+                        });
+                });
+
             modelBuilder.Entity("Scout.Web.Domain.InterviewWorkspaceConfiguration", b =>
                 {
                     b.Property<int>("InterviewRoundId")
@@ -638,6 +795,9 @@ namespace Scout.Web.Data.Migrations
                     b.Property<string>("PreparationNotes")
                         .HasMaxLength(100000)
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("RecordingChoiceEnabled")
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("RequiresReview")
                         .HasColumnType("INTEGER");
@@ -1352,6 +1512,40 @@ namespace Scout.Web.Data.Migrations
                     b.Navigation("InterviewRound");
                 });
 
+            modelBuilder.Entity("Scout.Web.Domain.InterviewRecording", b =>
+                {
+                    b.HasOne("Scout.Web.Domain.Document", "Document")
+                        .WithMany()
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Scout.Web.Domain.InterviewRound", null)
+                        .WithMany()
+                        .HasForeignKey("InterviewRoundId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Scout.Web.Domain.InterviewRecordingDecision", "ConsentDecision")
+                        .WithMany()
+                        .HasForeignKey("ConsentDecisionId", "InterviewRoundId")
+                        .HasPrincipalKey("Id", "InterviewRoundId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ConsentDecision");
+
+                    b.Navigation("Document");
+                });
+
+            modelBuilder.Entity("Scout.Web.Domain.InterviewRecordingDecision", b =>
+                {
+                    b.HasOne("Scout.Web.Domain.InterviewRound", null)
+                        .WithMany()
+                        .HasForeignKey("InterviewRoundId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Scout.Web.Domain.InterviewRound", b =>
                 {
                     b.HasOne("Scout.Web.Domain.JobApplication", "Application")
@@ -1361,6 +1555,34 @@ namespace Scout.Web.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Application");
+                });
+
+            modelBuilder.Entity("Scout.Web.Domain.InterviewTranscript", b =>
+                {
+                    b.HasOne("Scout.Web.Domain.InterviewRound", null)
+                        .WithMany()
+                        .HasForeignKey("InterviewRoundId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Scout.Web.Domain.Document", "OriginalDocument")
+                        .WithMany()
+                        .HasForeignKey("OriginalDocumentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Scout.Web.Domain.InterviewTranscript", null)
+                        .WithMany()
+                        .HasForeignKey("ParentTranscriptId", "InterviewRoundId")
+                        .HasPrincipalKey("Id", "InterviewRoundId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Scout.Web.Domain.InterviewRecording", null)
+                        .WithMany()
+                        .HasForeignKey("RecordingId", "InterviewRoundId")
+                        .HasPrincipalKey("Id", "InterviewRoundId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("OriginalDocument");
                 });
 
             modelBuilder.Entity("Scout.Web.Domain.InterviewWorkspaceConfiguration", b =>

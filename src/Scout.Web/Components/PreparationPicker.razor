@@ -1,5 +1,5 @@
 @using Scout.Web.Features.InterviewPreparation
-<DraftForm Model="@selection" Save="SaveAsync" CancelUrl="@ReturnUrl" SaveLabel="@($"Add selected {Label}")" FormName="@formId">
+<DraftForm Model="@selection" Save="SaveAsync" CancelUrl="@ReturnUrl" SaveLabel="@($"Add selected {Label}")" FormName="@formId" AcknowledgeEmptyResult="true">
 <h3>Select @Label</h3>
 <div class="field"><label for="@(formId + "-search")">Search available @Label</label><input id="@(formId + "-search")" @bind="search" @bind:event="oninput" /></div>
 <div class="field"><label for="@(formId + "-tag")">Filter @Label by tag</label><select id="@(formId + "-tag")" @bind="tag"><option value="">All tags</option>@foreach(var value in Choices.SelectMany(x => x.Tags).Distinct().Order()) { <option value="@value">@value</option> }</select></div>

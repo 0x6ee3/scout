@@ -1,0 +1,54 @@
+@using Scout.Web.Data
+@inject IDbContextFactory<ScoutDbContext> Factory
+@inject ILogger<EntityBreadcrumbs> Logger
+<nav class="breadcrumbs" aria-label="Breadcrumb"><ol>@for(var i=0;i<items.Count;i++){var item=items[i];<li>@if(i==items.Count-1){<span aria-current="page">@item.Label</span>}else{<a href="@item.Url">@item.Label</a>}</li>}</ol></nav>
+@code {
+    [Parameter, EditorRequired] public string Uri { get; set; } = "";
+    private sealed record Crumb(string Label, string Url);
+    private List<Crumb> items = [];
+    private int version;
+    protected override async Task OnParametersSetAsync()
+    {
+        var request = ++version;
+        var address = new Uri(Uri);
+        var parts = address.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var key = parts.FirstOrDefault() ?? "companies";
+        var label = key switch { "next-actions" => "Next actions", "questions" => "Employer questions", "experiences" => "STAR experiences", "cvs" => "CVs", "interviews" or "events" or "submissions" => "Applications", _ => char.ToUpperInvariant(key[0]) + key[1..] };
+        var trail = new List<Crumb> { new(label, key is "interviews" or "events" or "submissions" ? "/applications" : $"/{key}") };
+        items = trail;
+        try
+        {
+            await using var db = await Factory.CreateDbContextAsync();
+            var id = parts.Length > 1 && int.TryParse(parts[1], out var parsed) ? parsed : 0;
+            void Parents(int company, string companyName, int position, string positionTitle, int? application = null, string? attempt = null)
+            {
+                trail = [new("Companies", "/companies"),new(companyName,$"/companies/{company}"),new(positionTitle,$"/positions/{position}")];
+                if(application.HasValue) trail.Add(new(attempt ?? $"Application #{application}",$"/applications/{application}"));
+            }
+            async Task Application(int application)
+            {
+                var row = await db.Applications.AsNoTracking().Where(x=>x.Id==application).Select(x=>new{x.Id,x.AttemptLabel,x.PositionId,x.Position.Title,x.Position.CompanyId,x.Position.Company.Name}).SingleOrDefaultAsync();
+                if(row is not null) Parents(row.CompanyId,row.Name,row.PositionId,row.Title,row.Id,row.AttemptLabel);
+            }
+            if(key=="companies" && id>0){var name=await db.Companies.Where(x=>x.Id==id).Select(x=>x.Name).SingleOrDefaultAsync();if(name is not null)trail.Add(new(name,$"/companies/{id}"));}
+            else if(key=="positions" && id>0){var row=await db.Positions.Where(x=>x.Id==id).Select(x=>new{x.Title,x.CompanyId,x.Company.Name}).SingleOrDefaultAsync();if(row is not null)Parents(row.CompanyId,row.Name,id,row.Title);}
+            else if(key=="applications" && id>0) await Application(id);
+            else if(key=="interviews" && id>0){var row=await db.Interviews.Where(x=>x.Id==id).Select(x=>new{x.ApplicationId,x.Title}).SingleOrDefaultAsync();if(row is not null){await Application(row.ApplicationId);trail.Add(new(row.Title,$"/interviews/{id}"));}}
+            else if(key=="contacts" && id>0){var row=await db.Contacts.Where(x=>x.Id==id).Select(x=>new{x.Name,x.CompanyId,CompanyName=x.Company.Name}).SingleOrDefaultAsync();if(row is not null)trail=[new("Companies","/companies"),new(row.CompanyName,$"/companies/{row.CompanyId}"),new(row.Name,$"/contacts/{id}")];}
+            else if(key=="events" && id>0){var row=await db.TimelineEvents.Where(x=>x.Id==id).Select(x=>new{x.ApplicationId,x.Kind,x.EventDate}).SingleOrDefaultAsync();if(row is not null){await Application(row.ApplicationId);trail.Add(new($"{row.Kind} · {row.EventDate:d}",$"/events/{id}"));}}
+            else if(key=="submissions" && id>0){var row=await db.Submissions.Where(x=>x.Id==id).Select(x=>new{x.ApplicationId,x.SubmittedOn}).SingleOrDefaultAsync();if(row is not null){await Application(row.ApplicationId);trail.Add(new($"Submission · {row.SubmittedOn:d}",$"/submissions/{id}"));}}
+            else if(key=="documents" && id>0){var name=await db.Documents.Where(x=>x.Id==id).Select(x=>x.OriginalName).SingleOrDefaultAsync();if(name is not null)trail.Add(new(name,$"/documents/{id}"));}
+            else if(key=="cvs" && id>0){var name=await db.PreparedCvs.Where(x=>x.Id==id).Select(x=>x.DisplayName).SingleOrDefaultAsync();if(name is not null)trail.Add(new(name,$"/cvs/{id}"));}
+            else if(key=="questions" && id>0){var name=await db.EmployerQuestions.Where(x=>x.Id==id).Select(x=>x.Text).SingleOrDefaultAsync();if(name is not null)trail.Add(new(name,$"/questions/{id}"));}
+            else if(key=="experiences" && id>0){var name=await db.ProfessionalExperiences.Where(x=>x.Id==id).Select(x=>x.Title).SingleOrDefaultAsync();if(name is not null)trail.Add(new(name,$"/experiences/{id}"));}
+            else if(key=="next-actions" && id>0){var row=await db.NextActions.Where(x=>x.Id==id).Select(x=>new{x.Title,x.ApplicationId,x.PositionId}).SingleOrDefaultAsync();if(row is not null){if(row.ApplicationId.HasValue)await Application(row.ApplicationId.Value);trail.Add(new(row.Title,$"/next-actions/{id}"));}}
+            var final = parts.LastOrDefault();
+            var suffix = final switch { "new" => "Add", "edit" => "Edit", "import" => "Import", "timeline" => "Timeline", "preparation" => "Preparation", "setup" => "Private Workspace review", _ => null };
+            if(parts.Contains("transcripts")) suffix="Transcript review";
+            if(suffix is not null)trail.Add(new(suffix,address.PathAndQuery));
+            if(request==version) items=trail;
+        }
+        catch(Exception ex) when(ex is Microsoft.Data.Sqlite.SqliteException or IOException or InvalidOperationException)
+        { Logger.LogWarning(ex,"Could not load navigation context"); }
+    }
+}

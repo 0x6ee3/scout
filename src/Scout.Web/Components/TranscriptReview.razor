@@ -1,0 +1,23 @@
+@using Scout.Web.Features.InterviewTranscripts
+@inject TranscriptOperations Operations
+@inject Scout.Web.Features.InterviewRecordings.RecordingOperations Recordings
+<section class="card details-card"><div class="section-heading"><h2>Transcripts</h2>@if(!ReadOnly){<button type="button" class="icon-action" aria-label="Import transcript" @onclick="()=>showImport=true"><UiIcon Name="upload" /><span class="action-tooltip">Import transcript</span></button>}</div><p>Import externally prepared UTF-8 TXT text, independently of any recording or tool. Scout does not transcribe it.</p>
+@if(message is not null){<p role="status">@message</p>}
+<UiDialog Open="@showImport" Title="Import transcript" Busy="@busy" OnCancel="CancelImport"><ChildContent><label for="transcript-upload">UTF-8 TXT transcript</label><InputFile @key="filePicker" id="transcript-upload" OnChange="e=>selected=e.File" accept=".txt" /><p>At most 5 MiB and 1,000,000 characters.</p><label>Optional source recording<select @bind="recordingId"><option value="0">None</option>@foreach(var recording in recordings){<option value="@recording.Id">@recording.OriginalName</option>}</select></label><button @onclick="Import" disabled="@busy">Import transcript</button>@if(message is not null){<p role="alert">@message</p>}</ChildContent></UiDialog>
+<UiDialog Open="@saved" Title="Transcript saved" OnCancel="()=>saved=false"><ChildContent><p>Imported transcript saved. Original retained.</p></ChildContent><Footer><button @onclick="()=>saved=false">Done</button></Footer></UiDialog>
+@foreach(var transcript in transcripts){<article><p><a href="@($"/interviews/{RoundId}/transcripts/{transcript.Id}")">@transcript.Origin · @transcript.CreatedAtUtc.ToLocalTime().ToString("g") · #@transcript.Id</a> @(transcript.ArchivedAtUtc.HasValue ? "(archived)" : "")</p>
+@if(transcript.RecordingId.HasValue){<p>Source recording: @recordings.SingleOrDefault(x=>x.Id==transcript.RecordingId)?.OriginalName</p>}
+@if(!ReadOnly){<button @onclick="()=>Archive(transcript)">@(transcript.ArchivedAtUtc.HasValue ? "Restore metadata" : "Archive metadata")</button>}
+</article>}
+</section>
+@code {
+    [Parameter] public int RoundId {get;set;}
+    [Parameter] public bool ReadOnly {get;set;}
+    private IReadOnlyList<InterviewTranscript> transcripts=[];private IReadOnlyList<InterviewRecording> recordings=[];
+    private IBrowserFile? selected;private int recordingId,filePicker;private bool busy,showImport,saved;private string? message;private Guid token=Guid.NewGuid();
+    protected override async Task OnParametersSetAsync()=>await Reload();
+    private void CancelImport(){showImport=false;selected=null;recordingId=0;filePicker++;message=null;}
+    private async Task Reload(){transcripts=await Operations.ListAsync(RoundId,true);recordings=await Recordings.ListAsync(RoundId,true);}
+    private async Task Import(){if(busy)return;busy=true;try{if(selected is null)throw new System.ComponentModel.DataAnnotations.ValidationException("Choose a transcript file.");await using var stream=selected.OpenReadStream(TranscriptOperations.MaximumBytes);await Operations.ImportAsync(RoundId,selected.Name,stream,recordingId==0?null:recordingId,token);token=Guid.NewGuid();selected=null;recordingId=0;filePicker++;message="Imported transcript saved. Original retained.";await Reload();showImport=false;saved=true;}catch(Exception ex) when(ex is IOException or UnauthorizedAccessException or System.ComponentModel.DataAnnotations.ValidationException){message=ex.Message;}finally{busy=false;}}
+    private async Task Archive(InterviewTranscript row){await Operations.ArchiveAsync(RoundId,row.Id,!row.ArchivedAtUtc.HasValue);await Reload();}
+}

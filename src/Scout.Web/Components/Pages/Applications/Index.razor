@@ -4,7 +4,7 @@
 @inject Scout.Web.Features.Companies.CompanyOperations Companies
 @inject NavigationManager Navigation
 <PageTitle>Applications · Scout</PageTitle>
-<div class="page-heading"><h1>Applications</h1><a class="button" href="/applications/new">Add application</a></div>
+<div class="page-heading"><h1>Applications</h1><ActionLink Href="/applications/new" Label="Add application" /></div>
 <LoadPanel Load="LoadAsync" LoadKey="@Navigation.Uri">
     <form method="get" action="/applications" class="card catalog-filters" role="search">
         <div class="filter-field"><label for="q">Search applications</label><input id="q" name="q" value="@Q" placeholder="Company, position or attempt label" /></div>

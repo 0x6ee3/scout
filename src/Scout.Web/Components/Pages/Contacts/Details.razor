@@ -1,7 +1,12 @@
 @page "/contacts/{Id:int}"
 @using Scout.Web.Features.Contacts
 @inject ContactOperations Contacts
-<PageTitle>Contact · Scout</PageTitle><a href="@CatalogLinks.List("/contacts", ListQuery)">← Contacts</a>
-<LoadPanel Load="LoadAsync" LoadKey="@Id.ToString()">@if (contact is null) { <h1>Contact not found</h1> } else { <h1>@contact.Name</h1><p><a href="@($"/companies/{contact.CompanyId}")">@contact.Company.Name</a> · @contact.Role</p><a class="button" href="@CatalogLinks.Record($"/contacts/{Id}/edit", ListQuery)">Edit contact</a><section class="card details-card"><dl><dt>Email</dt><dd>@(contact.Email ?? "Not added")</dd><dt>Phone</dt><dd>@(contact.Phone ?? "Not added")</dd><dt>Profile</dt><dd>@if (contact.ProfileUrl is not null) { <a href="@contact.ProfileUrl" target="_blank" rel="noopener noreferrer">@contact.ProfileUrl</a> } else { <span>Not added</span> }</dd></dl><p class="plain-text">@contact.Notes</p></section><ArchiveActions IsArchived="contact.IsArchived" Subject="contact" Explanation="Existing associations are preserved." Save="@(a => Contacts.SetArchivedAsync(Id,a))" OnChanged="LoadAsync" /> }</LoadPanel>
-@code { [Parameter] public int Id { get; set; } [SupplyParameterFromQuery] public string? ListQuery { get; set; } private Contact? contact; private async Task LoadAsync() => contact = await Contacts.GetAsync(Id); }
+<PageTitle>Contact · Scout</PageTitle><a class="back-link" href="@CatalogLinks.List("/contacts", ListQuery)">← Contacts</a>
+<LoadPanel Load="LoadAsync" LoadKey="@Id.ToString()">@if(contact is null){<h1>Contact not found</h1>}else{
+<h1>@contact.Name</h1><p><a href="@($"/companies/{contact.CompanyId}")">@contact.Company.Name</a> · @contact.Role</p>
+<PageActions><button type="button" @onclick="()=>showEdit=true"><UiIcon Name="edit" /> Edit contact</button><ArchiveActions IsArchived="contact.IsArchived" Subject="contact" Explanation="Existing associations are preserved." Save="@(a=>Contacts.SetArchivedAsync(Id,a))" OnChanged="LoadAsync" /></PageActions>
+<UiDialog Open="@showEdit" Title="Edit contact" OnCancel="CloseEditor"><ChildContent><ActionLink Href="@CatalogLinks.Record($"/contacts/{Id}/edit",ListQuery)" Label="Open full editor" /><ContactEditorForm Id="Id" ListQuery="@ListQuery" /></ChildContent></UiDialog>
+<div class="entity-grid two-column"><section class="card details-card"><h2>Contact information</h2><dl><dt>Email</dt><dd>@(contact.Email??"Not added")</dd><dt>Phone</dt><dd>@(contact.Phone??"Not added")</dd><dt>Profile</dt><dd>@if(contact.ProfileUrl is not null){<a href="@contact.ProfileUrl" target="_blank" rel="noopener noreferrer">@contact.ProfileUrl</a>}else{<span>Not added</span>}</dd></dl></section><section class="card details-card"><h2>Notes</h2><p class="plain-text">@(contact.Notes??"No notes added.")</p></section></div>
+}</LoadPanel>
+@code { [Parameter] public int Id { get; set; } [SupplyParameterFromQuery] public string? ListQuery { get; set; } private Contact? contact; private bool showEdit; private async Task CloseEditor(){showEdit=false;await LoadAsync();} private async Task LoadAsync() => contact = await Contacts.GetAsync(Id); }
 

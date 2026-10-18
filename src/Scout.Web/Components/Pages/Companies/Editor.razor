@@ -35,7 +35,7 @@ else
             {
                 <div class="message error" role="alert">@error</div>
             }
-            <fieldset disabled="@saving">
+            <fieldset class="editor-fields" disabled="@(saving || savedUrl is not null)">
                 <legend class="visually-hidden">Company information</legend>
                 <div class="field">
                     <label for="company-name">Company name <span class="muted">(required)</span></label>
@@ -75,14 +75,8 @@ else
     </section>
     <NavigationLock ConfirmExternalNavigation="@(saving || editContext.IsModified())" OnBeforeInternalNavigation="BeforeNavigation" />
 
-    @if (pendingNavigation is not null)
-    {
-        <div class="message" role="alert">
-            <p>You have unsaved company details. Leave without saving?</p>
-            <button type="button" class="secondary" @onclick="Leave">Leave without saving</button>
-            <button type="button" @onclick="() => pendingNavigation = null">Keep editing</button>
-        </div>
-    }
+    <UiDialog Open="@(pendingNavigation is not null)" Title="Leave without saving?" OnCancel="()=>pendingNavigation=null"><ChildContent><p>You have unsaved company details.</p></ChildContent><Footer><button @onclick="()=>pendingNavigation=null">Keep editing</button><button class="secondary" @onclick="Leave">Leave without saving</button></Footer></UiDialog>
+    <UiDialog Open="@(savedUrl is not null)" Title="Company saved" OnCancel="FinishSave"><ChildContent><p>Your company changes were saved.</p></ChildContent><Footer><button @onclick="FinishSave">Done</button></Footer></UiDialog>
 }
 
 @code {
@@ -96,6 +90,7 @@ else
     private bool saving;
     private string? error;
     private string? pendingNavigation;
+    private string? savedUrl;
 
     private string CancelUrl => Id.HasValue ? CatalogLinks.Record($"/companies/{Id}", ListQuery) : CatalogLinks.List("/companies", ListQuery);
 
@@ -139,7 +134,7 @@ else
 
     private async Task SaveAsync()
     {
-        if (saving) return;
+        if (saving || savedUrl is not null) return;
         saving = true;
         error = null;
         try
@@ -156,7 +151,7 @@ else
             else { id = await Companies.CreateAsync(model); }
             editContext.MarkAsUnmodified();
             saving = false;
-            Navigation.NavigateTo(CatalogLinks.Record($"/companies/{id}", ListQuery));
+            savedUrl = CatalogLinks.Record($"/companies/{id}", ListQuery);
         }
         catch (ValidationException exception) { error = exception.Message; }
         catch (Exception exception) when (exception is Microsoft.EntityFrameworkCore.DbUpdateException or Microsoft.Data.Sqlite.SqliteException)
@@ -181,6 +176,7 @@ else
         }
     }
 
+    private void FinishSave() { var target=savedUrl; savedUrl=null; if(target is not null) Navigation.NavigateTo(target); }
     private void Leave()
     {
         var destination = pendingNavigation!;

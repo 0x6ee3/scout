@@ -5,9 +5,8 @@
 <LoadPanel Load="LoadAsync" LoadKey="@Id.ToString()">
 @if(row is null) { <h1>Experience not found</h1> } else {
 <a href="@CatalogLinks.List("/experiences", ListQuery)">← STAR experiences</a><h1>@row.Title</h1><TagBadges Values="row.Tags.Select(x => x.Tag)" />
-<p><a class="button" href="@CatalogLinks.Record($"/experiences/{Id}/edit", ListQuery)">Edit experience</a></p>
-<section class="card details-card"><ExperienceStory Experience="row" /></section>
-<ArchiveActions IsArchived="row.IsArchived" Subject="experience" Explanation="Existing interview selections and rehearsal notes are preserved." Save="@(a => Experiences.SetArchivedAsync(Id, a))" OnChanged="LoadAsync" />
+<PageActions><ActionLink Href="@CatalogLinks.Record($"/experiences/{Id}/edit", ListQuery)" Label="Edit experience" /><ArchiveActions IsArchived="row.IsArchived" Subject="experience" Explanation="Existing interview selections and rehearsal notes are preserved." Save="@(a => Experiences.SetArchivedAsync(Id, a))" OnChanged="LoadAsync" /></PageActions>
+<ExperienceStory Experience="row" Columns="true" />
 }
 </LoadPanel>
 @code {

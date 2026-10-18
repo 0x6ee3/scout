@@ -5,6 +5,9 @@ namespace Scout.Web.Data;
 
 public sealed class ScoutDbContext(DbContextOptions<ScoutDbContext> options) : DbContext(options)
 {
+    public DbSet<InterviewRecordingDecision> RecordingDecisions => Set<InterviewRecordingDecision>();
+    public DbSet<InterviewRecording> Recordings => Set<InterviewRecording>();
+    public DbSet<InterviewTranscript> Transcripts => Set<InterviewTranscript>();
     public DbSet<EmployerQuestion> EmployerQuestions => Set<EmployerQuestion>();
     public DbSet<EmployerQuestionTag> EmployerQuestionTags => Set<EmployerQuestionTag>();
     public DbSet<ProfessionalExperience> ProfessionalExperiences => Set<ProfessionalExperience>();
@@ -40,6 +43,7 @@ public sealed class ScoutDbContext(DbContextOptions<ScoutDbContext> options) : D
         SubmissionMappings.Configure(modelBuilder);
         PreparationMappings.Configure(modelBuilder);
         WorkspaceMappings.Configure(modelBuilder);
+        InterviewReviewMappings.Configure(modelBuilder);
         var company = modelBuilder.Entity<Company>();
         company.Property(c => c.Name).HasMaxLength(200).IsRequired();
         company.Property(c => c.WebsiteUrl).HasMaxLength(2048);

@@ -1,63 +1,47 @@
+# Agent workflow for Scout
 
-## C# Code Intelligence — Rider MCP
+## Reliable file editing and bounded recovery
 
-This project is developed in .NET/C#. JetBrains Rider is
-available as a semantic code intelligence server through MCP.
+- Prefer the built-in patch tool for focused edits to Markdown, JSON, configuration,
+  and source files. Do not introduce Node.js, npm packages, or MCP servers just to
+  read or edit ordinary text files.
+- Use `rg` for text discovery and native PowerShell for a local file-editing
+  fallback. Use single-quoted here-strings for literal multiline content; preserve
+  UTF-8 encoding, existing line endings, and unrelated user changes.
+- After a failed operation, inspect the error before retrying. A retry must address
+  an identified cause or a clearly transient failure. Never repeat an unchanged
+  failing call.
+- For the same file-editing objective, allow at most two failed attempts through
+  one tool or runtime, including attempts with revised syntax. Then switch to an
+  independent available method. Renaming the command or script does not reset
+  this limit.
+- If a Node.js or MCP runtime fails, use a native shell fallback instead of
+  debugging or reinstalling that runtime during an unrelated documentation task.
+- Before a fallback write, check whether the failed operation partially changed
+  the target. After the write, verify the intended content and inspect the diff.
+- If the independent fallback also fails, stop that operation and report the
+  exact error, any partial changes, and the smallest next step. Continue unrelated
+  work that can still be completed. Do not start another chain of speculative
+  retries or silently expand the task into environment repair.
 
-### General policy
+## Keep verification proportional
 
-Prefer Rider MCP tools when an operation requires understanding
-C# symbols, types, references, inheritance, or call relationships.
+- For documentation-only edits, inspect the affected text and diff and run
+  `git diff --check -- <changed paths>`. Check local links when changed. Do not
+  build the application or run the full test suite unless the documentation task
+  requires verifying application behavior or executable examples.
+- For code changes, run checks appropriate to the affected behavior; see
+  [docs/engineering/DEVELOPMENT.md](docs/engineering/DEVELOPMENT.md#build-and-verification) for the existing
+  .NET, JavaScript, and EF verification commands.
+- Read relevant sections of large documents rather than repeatedly dumping whole
+  files. Keep command output focused on evidence needed for the task.
+- Treat these retry limits as agent instructions, not an enforced spending cap.
+  Report unresolved failures honestly; never claim that a failed check passed.
 
-Do not default to PowerShell, rg, or textual replacement for
-operations that can be performed more accurately using Rider.
+## Record significant decisions
 
-Use the available tools deliberately. Do not call MCP tools
-when ordinary file reads or text searches are sufficient.
-
-### Code exploration
-
-- Use `search_symbol` to locate C# classes, interfaces,
-  methods, and other symbols.
-- Use `get_symbol_info` to inspect definitions and signatures.
-- Use `analyze_calls` with `INCOMING_CALLS` to identify callers.
-- Use `analyze_calls` with `OUTGOING_CALLS` to understand
-  dependencies and execution paths.
-- Use `get_file_problems` to inspect IDE diagnostics.
-
-Before making changes to existing functionality, inspect
-the affected symbols and their relevant dependencies.
-
-### Refactoring
-
-- Prefer `rename_refactoring` for renaming C# symbols.
-- Do not use global string replacements to rename classes,
-  methods, properties, or interfaces.
-- Use ordinary file editing for implementation changes.
-- Preserve established architectural conventions.
-
-### Verification
-
-After modifying C# source files:
-
-1. Use `build_project` when available.
-2. Inspect relevant diagnostics using `get_file_problems`.
-3. Run the appropriate automated tests.
-4. Report any remaining errors or unverified behavior.
-
-A successful build does not replace running tests.
-
-### Fallbacks
-
-If Rider MCP is unavailable, fails, or does not support a
-required operation, use standard CLI and file tools.
-
-Do not repeatedly retry a failing MCP operation.
-
-Use `rg` and other textual searches for configuration,
-documentation, string literals, and exploratory searches.
-
-### Tool availability
-
-Do not assume a tool is available simply because it is
-documented here. Use only tools exposed in the current session.
+- Use the [ADR collection](docs/engineering/decisions/README.md) and its template
+  for significant architecture, product-boundary and durable UX decisions.
+- Preserve accepted historical rationale; document material changes in a new
+  numbered ADR that identifies the affected earlier decision. Routine edits do
+  not need an ADR.

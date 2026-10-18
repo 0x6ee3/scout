@@ -6,10 +6,10 @@
 <LoadPanel Load="LoadAsync" LoadKey="@Id.ToString()">
 @if(missing) { <p>Question not found. It may have been deleted.</p> } else {
 <DraftForm Model="@model" Save="SaveAsync" CancelUrl="@Back" SaveLabel="Save question" FormName="QuestionEditor">
-    <div class="field"><label for="question">Question (required)</label><InputTextArea id="question" @bind-Value="model.Text" maxlength="4000" /></div>
-    <div class="field"><label for="intent">Intent / what to learn</label><InputTextArea id="intent" @bind-Value="model.Intent" maxlength="100000" /></div>
-    <div class="field"><label for="follow">Suggested follow-ups</label><InputTextArea id="follow" @bind-Value="model.FollowUpQuestions" maxlength="100000" /></div>
-    <div class="field"><label for="notes">Private library notes</label><InputTextArea id="notes" @bind-Value="model.Notes" maxlength="100000" /></div>
+    <div class="field"><label for="question">Question (required)</label><InputTextArea id="question" @bind-Value="model.Text" maxlength="4000" /><MarkdownPreview Text="@model.Text" /></div>
+    <div class="field"><label for="intent">Intent / what to learn</label><InputTextArea id="intent" @bind-Value="model.Intent" maxlength="100000" /><MarkdownPreview Text="@model.Intent" /></div>
+    <div class="field"><label for="follow">Suggested follow-ups</label><InputTextArea id="follow" @bind-Value="model.FollowUpQuestions" maxlength="100000" /><MarkdownPreview Text="@model.FollowUpQuestions" /></div>
+    <div class="field"><label for="notes">Private library notes</label><InputTextArea id="notes" @bind-Value="model.Notes" maxlength="100000" /><MarkdownPreview Text="@model.Notes" /></div>
     <TagEditor @bind-Value="model.Tags" />
 </DraftForm> }
 </LoadPanel>

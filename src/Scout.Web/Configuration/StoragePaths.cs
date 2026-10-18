@@ -49,5 +49,6 @@ public sealed class StoragePaths
     {
         Directory.CreateDirectory(Path.GetDirectoryName(DatabasePath)!);
         Directory.CreateDirectory(AssetDirectory);
+        Directory.CreateDirectory(Path.Combine(Root, "recordings"));
     }
 }

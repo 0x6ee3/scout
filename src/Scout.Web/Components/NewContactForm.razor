@@ -1,0 +1,20 @@
+@using Scout.Web.Features.Contacts
+@inject ContactOperations Contacts
+<DraftForm Model="model" Save="SaveAsync" CancelUrl="@ReturnUrl" SaveLabel="Save contact" FormName="@formId">
+    <p>This adds a company contact. Explicit application selections remain separate.</p>
+    <div class="field"><label for="@(formId+"-name")">Name (required)</label><InputText id="@(formId+"-name")" @bind-Value="model.Name" maxlength="200" /></div>
+    <div class="field"><label for="@(formId+"-role")">Role</label><InputText id="@(formId+"-role")" @bind-Value="model.Role" maxlength="200" /></div>
+    <div class="field"><label for="@(formId+"-email")">Email</label><InputText id="@(formId+"-email")" @bind-Value="model.Email" maxlength="320" /></div>
+    <div class="field"><label for="@(formId+"-phone")">Phone</label><InputText id="@(formId+"-phone")" @bind-Value="model.Phone" maxlength="100" /></div>
+    <div class="field"><label for="@(formId+"-profile")">Profile URL</label><InputText id="@(formId+"-profile")" @bind-Value="model.ProfileUrl" maxlength="2048" /></div>
+    <div class="field"><label for="@(formId+"-notes")">Notes</label><InputTextArea id="@(formId+"-notes")" @bind-Value="model.Notes" maxlength="100000" /></div>
+</DraftForm>
+@code {
+    [Parameter] public int CompanyId { get; set; }
+    [Parameter] public string ReturnUrl { get; set; } = "/contacts";
+    [Parameter] public EventCallback OnCreated { get; set; }
+    private ContactEditModel model = new();
+    private readonly string formId=$"contact-{Guid.NewGuid():N}";
+    protected override void OnInitialized() => model.CompanyId=CompanyId;
+    private async Task<string> SaveAsync() { await Contacts.SaveAsync(null,model); await OnCreated.InvokeAsync(); return ReturnUrl; }
+}

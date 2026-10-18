@@ -10,6 +10,7 @@
 </fieldset>
 <p role="status" data-save-status>@(ReadOnly ? "Read only" : "Preparing browser draft recovery…")</p>
 <div data-recovery></div>
+@if(TextEnabled){<button type="button" @onclick="Preview">Preview current source</button>@if(preview is not null){<MarkdownText Text="@preview" />}}
 </div>
 @code {
     [Parameter] public Guid WorkspaceId {get;set;} [Parameter] public int RoundId {get;set;} [Parameter] public int ConfigurationRevision {get;set;} [Parameter] public int? QuestionId {get;set;}
@@ -18,6 +19,8 @@
     [Parameter] public string Label {get;set;}="Answer / quick notes"; [Parameter] public EventCallback OnCreated {get;set;}
     private string EditorId=>Creation?"ad-hoc":QuestionId.HasValue?$"answer-{QuestionId}":"interview-notes";
     private string? initialText;private bool initialAsked,initialFollow;
+    private string? preview;
+    private async Task Preview(){if(module is not null)preview=await module.InvokeAsync<string>("previewText",element);}
     protected override void OnInitialized(){initialText=Text;initialAsked=Asked;initialFollow=FollowUp;}
     private ElementReference element; private IJSObjectReference? module; private DotNetObjectReference<CaptureEditor>? self;
     protected override async Task OnAfterRenderAsync(bool firstRender)

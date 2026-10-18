@@ -1,0 +1,294 @@
+<div id="scout-m6-review" aria-label="Scout Web milestone 6 design review">
+  <style>
+    #scout-m6-review { --sc-bg:light-dark(#f5f7fa,#16212e); --sc-paper:light-dark(#fff,#202e3c); --sc-ink:light-dark(#243249,#e4ebf3); --sc-muted:light-dark(#55677b,#b6c5d4); --sc-line:light-dark(#d9e2eb,#46576a); --sc-soft:light-dark(#edf2f6,#2b3c4c); --sc-teal:light-dark(#235c66,#91ced5); --sc-on-teal:light-dark(#fff,#112e36); --sc-danger:light-dark(#a52b36,#ffb0b7); --sc-nav:#172d43; --sc-nav-ink:#e2edf7; color:var(--sc-ink); font:16px/1.55 "Segoe UI",system-ui,sans-serif; color-scheme:light dark; }
+    #scout-m6-review * { box-sizing:border-box; }
+    #scout-m6-review [hidden] { display:none!important; }
+    #scout-m6-review :where(.sc-window,dialog,.sc-reviewbar) :is(button,input,textarea,select) { font:inherit; }
+    #scout-m6-review :where(.sc-window,dialog,.sc-reviewbar) :is(button,a) { -webkit-tap-highlight-color:transparent; }
+    #scout-m6-review :where(.sc-window,dialog,.sc-reviewbar) button { display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid var(--sc-line); border-radius:6px; padding:9px 14px; background:var(--sc-paper); color:var(--sc-ink); white-space:normal; text-align:left; }
+    #scout-m6-review :where(.sc-window,dialog,.sc-reviewbar) button:hover { background:var(--sc-soft); }
+    #scout-m6-review :where(.sc-window,dialog,.sc-reviewbar) button:disabled { opacity:.5; }
+    #scout-m6-review :where(.sc-window,dialog,.sc-reviewbar) :is(button,a,input,textarea,select,summary):focus-visible { outline:3px solid var(--sc-teal); outline-offset:3px; }
+    #scout-m6-review .sc-primary { color:var(--sc-on-teal); background:var(--sc-teal); border-color:var(--sc-teal); }
+    #scout-m6-review .sc-primary:hover { filter:brightness(.94); background:var(--sc-teal); }
+    #scout-m6-review .sc-danger { color:var(--sc-danger); }
+    #scout-m6-review :is(.sc-window,dialog) a { color:var(--sc-teal); text-decoration:none; text-underline-offset:4px; }
+    #scout-m6-review :is(.sc-window,dialog) a:hover { text-decoration:underline; }
+    #scout-m6-review :is(.sc-window,dialog,.sc-reviewbar) svg { flex:0 0 auto; width:18px; height:18px; }
+    #scout-m6-review .sc-icon { padding:8px; min-width:36px; min-height:36px; border-color:transparent; background:transparent; }
+    #scout-m6-review .sc-reviewbar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; padding:12px 0; }
+    #scout-m6-review .sc-reviewbar small { margin-left:auto; color:var(--sc-muted); }
+    #scout-m6-review .sc-reviewbar button[aria-pressed=true] { background:var(--sc-ink); color:var(--sc-paper); }
+    #scout-m6-review .sc-design { height:1440px; }
+    #scout-m6-review .sc-label { display:flex; gap:12px; justify-content:space-between; padding:10px 16px; color:var(--sc-muted); background:var(--sc-soft); }
+    #scout-m6-review .sc-window { background:var(--sc-bg); height:calc(100% - 48px); overflow:auto; }
+    #scout-m6-review .sc-nav { display:flex; align-items:center; flex-wrap:wrap; gap:18px 28px; padding:18px 32px; background:var(--sc-nav); color:var(--sc-nav-ink); }
+    #scout-m6-review .sc-brand { display:flex; align-items:center; gap:10px; font-size:23px; font-weight:600; padding-right:12px; }
+    #scout-m6-review .sc-mark { border:1px solid #7ca0b8; border-radius:8px; width:34px; height:34px; display:grid; place-items:center; }
+    #scout-m6-review .sc-nav nav { display:flex; flex-wrap:wrap; gap:14px 24px; flex:1; }
+    #scout-m6-review .sc-nav a { color:var(--sc-nav-ink); padding:4px 0; }
+    #scout-m6-review .sc-nav a[aria-current=page] { border-bottom:2px solid #8db9bd; }
+    #scout-m6-review .sc-local { font-size:13px; }
+    #scout-m6-review .sc-body { padding:24px 32px 48px; }
+    #scout-m6-review .sc-crumb { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:18px; font-size:14px; color:var(--sc-muted); }
+    #scout-m6-review .sc-crumb a { text-decoration:underline; text-decoration-color:var(--sc-line); }
+    #scout-m6-review .sc-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin-bottom:20px; }
+    #scout-m6-review h1 { font-size:clamp(24px,1.2vw + 14px,42px); line-height:1.25; font-weight:600; letter-spacing:-.025em; margin:2px 0 8px; max-width:70ch; overflow-wrap:anywhere; }
+    #scout-m6-review h2 { font-size:19px; line-height:1.35; font-weight:600; margin:0; }
+    #scout-m6-review h3 { font-size:17px; font-weight:600; margin:0 0 8px; }
+    #scout-m6-review p { margin:0 0 12px; max-width:82ch; }
+    #scout-m6-review .sc-muted { color:var(--sc-muted); }
+    #scout-m6-review .sc-kicker { color:var(--sc-muted); font-size:13px; text-transform:uppercase; letter-spacing:.08em; }
+    #scout-m6-review .sc-tag { display:inline-flex; align-items:center; padding:3px 9px; background:var(--sc-soft); border-radius:5px; font-size:13px; }
+    #scout-m6-review .sc-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; border-top:1px solid var(--sc-line); border-bottom:1px solid var(--sc-line); padding:12px 0; margin-bottom:24px; }
+    #scout-m6-review .sc-actions .sc-spacer { flex:1; }
+    #scout-m6-review .sc-columns { display:grid; grid-template-columns:minmax(0,.85fr) minmax(0,1.35fr) minmax(0,1fr); gap:24px; align-items:start; }
+    #scout-m6-review .sc-column { min-width:0; display:grid; gap:20px; }
+    #scout-m6-review [data-layout=first] .sc-columns { grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,.85fr); }
+    #scout-m6-review [data-layout=first] .sc-context { order:3; }
+    #scout-m6-review [data-layout=first] .sc-work { order:1; }
+    #scout-m6-review [data-layout=first] .sc-support { order:2; }
+    #scout-m6-review .sc-panel { background:var(--sc-paper); border:1px solid var(--sc-line); border-radius:8px; padding:22px; min-width:0; }
+    #scout-m6-review .sc-panel-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+    #scout-m6-review .sc-panel-head .sc-mini-actions { display:flex; flex-wrap:wrap; gap:2px; }
+    #scout-m6-review .sc-record { padding:16px 0; border-top:1px solid var(--sc-line); }
+    #scout-m6-review .sc-record:first-of-type { padding-top:0; border-top:0; }
+    #scout-m6-review .sc-row { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-start; gap:8px 16px; }
+    #scout-m6-review .sc-row > div { min-width:0; flex:1; }
+    #scout-m6-review .sc-row .sc-mini-actions { flex:0 0 auto; display:flex; }
+    #scout-m6-review .sc-facts { display:grid; grid-template-columns:minmax(95px,.4fr) minmax(0,1fr); gap:10px 14px; margin:0; }
+    #scout-m6-review dt { color:var(--sc-muted); }
+    #scout-m6-review dd { margin:0; overflow-wrap:anywhere; }
+    #scout-m6-review .sc-note { margin-top:18px; padding-top:16px; border-top:1px solid var(--sc-line); }
+    #scout-m6-review .sc-file { overflow-wrap:anywhere; }
+    #scout-m6-review .sc-empty { padding:28px 0; color:var(--sc-muted); }
+    #scout-m6-review label { display:block; margin-bottom:14px; font-weight:500; }
+    #scout-m6-review input:not([type=checkbox]),#scout-m6-review textarea,#scout-m6-review select { display:block; width:100%; padding:10px 12px; margin-top:6px; background:var(--sc-paper); color:var(--sc-ink); border:1px solid var(--sc-line); border-radius:5px; min-width:0; }
+    #scout-m6-review textarea { min-height:160px; resize:vertical; }
+    #scout-m6-review .sc-pair { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    #scout-m6-review .sc-field-note { font-size:13px; color:var(--sc-muted); font-weight:400; margin:6px 0 16px; }
+    #scout-m6-review .sc-read { max-width:80ch; }
+    #scout-m6-review .sc-check { display:flex; align-items:flex-start; gap:10px; font-weight:400; }
+    #scout-m6-review .sc-check input { margin-top:6px; }
+    #scout-m6-review .sc-bottom { margin-top:24px; border-top:1px solid var(--sc-line); padding-top:14px; font-size:13px; color:var(--sc-muted); }
+    #scout-m6-review .sc-window details { position:relative; }
+    #scout-m6-review .sc-window summary { display:flex; align-items:center; gap:8px; list-style:none; padding:9px 14px; background:var(--sc-paper); border:1px solid var(--sc-line); border-radius:6px; }
+    #scout-m6-review .sc-menu { position:absolute; right:0; top:100%; z-index:5; min-width:220px; background:var(--sc-paper); border:1px solid var(--sc-line); border-radius:6px; padding:6px; box-shadow:0 12px 24px #0002; }
+    #scout-m6-review .sc-menu button { width:100%; border:0; }
+    #scout-m6-review [data-layout=before] .sc-body { max-width:1200px; margin:0 auto; padding:52px 32px; }
+    #scout-m6-review [data-layout=before] .sc-columns { display:flex; flex-direction:column; align-items:stretch; }
+    #scout-m6-review [data-layout=before] .sc-column { width:720px; max-width:100%; }
+    #scout-m6-review [data-layout=before] .sc-crumb { display:none; }
+    #scout-m6-review [data-layout=before] .sc-before-back { display:block; margin-bottom:28px; }
+    #scout-m6-review .sc-before-back { display:none; }
+    #scout-m6-review .sc-before-only { display:none; }
+    #scout-m6-review [data-layout=before] .sc-before-only { display:block; margin-top:20px; }
+    #scout-m6-review [data-layout=before] .sc-actions { border:0; }
+    #scout-m6-review [data-layout=before] .sc-panel { padding:32px; }
+    #scout-m6-review [data-layout=before] .sc-pair { display:block; }
+    #scout-m6-review dialog { width:min(640px,calc(100vw - 40px)); max-height:85vh; padding:28px; border:1px solid var(--sc-line); border-radius:10px; background:var(--sc-paper); color:var(--sc-ink); box-shadow:0 24px 80px #0004; }
+    #scout-m6-review dialog::backdrop { background:#0b1d32aa; }
+    #scout-m6-review dialog h2 { margin-bottom:16px; }
+    #scout-m6-review dialog footer { display:flex; justify-content:flex-end; gap:10px; margin-top:24px; flex-wrap:wrap; }
+    #scout-m6-review .sc-dialog-error { color:var(--sc-danger); }
+    @media(min-width:2200px) { #scout-m6-review .sc-window { font-size:20px; } #scout-m6-review .sc-body { padding:32px 48px 56px; } #scout-m6-review .sc-panel { padding:28px; } #scout-m6-review h2 { font-size:23px; } #scout-m6-review h3 { font-size:21px; } #scout-m6-review .sc-columns { gap:32px; } }
+    @media(max-width:1150px) { #scout-m6-review .sc-nav { gap:12px; padding:14px 20px; } #scout-m6-review .sc-nav nav { gap:10px 16px; font-size:14px; } #scout-m6-review .sc-body { padding:20px; } #scout-m6-review .sc-columns { gap:12px; } #scout-m6-review .sc-panel { padding:15px; } #scout-m6-review .sc-pair { display:block; } }
+    @media(max-width:760px) { #scout-m6-review .sc-columns,#scout-m6-review [data-layout=first] .sc-columns { grid-template-columns:1fr; } #scout-m6-review .sc-local { display:none; } #scout-m6-review .sc-design { height:1700px; } #scout-m6-review .sc-reviewbar small { margin-left:0; } }
+  </style>
+  <div class="sc-reviewbar" aria-label="Review screens">
+    <span>Review</span>
+    <button type="button" data-screen="application" aria-pressed="true">Application</button>
+    <button type="button" data-screen="preparation" aria-pressed="false">Interview preparation</button>
+    <button type="button" data-screen="editor" aria-pressed="false">Position editor</button>
+    <small>Design proposal · fictional records · no live data</small>
+  </div>
+  <div class="viz-carousel" aria-label="Scout layout alternatives">
+    <section class="sc-design" data-variant="Work centered" data-layout="center">
+      <div class="sc-label"><span>Three columns · context / work / resources</span><span class="sc-viewport"></span></div><div class="sc-window"></div>
+    </section>
+    <section class="sc-design" data-variant="Work first" data-layout="first" hidden>
+      <div class="sc-label"><span>Three columns · work / resources / context</span><span class="sc-viewport"></span></div><div class="sc-window"></div>
+    </section>
+    <section class="sc-design" data-variant="Current structure" data-layout="before" hidden>
+      <div class="sc-label"><span>Source reconstruction · not a screenshot of the running app</span><span class="sc-viewport"></span></div><div class="sc-window"></div>
+    </section>
+  </div>
+  <template id="sc-m6-application">
+    <div class="sc-column sc-context">
+      <section class="sc-panel"><div class="sc-panel-head"><h2>Application context</h2></div><dl class="sc-facts"><dt>Company</dt><dd><a href="#" data-demo="Company details">Nordlicht Systems GmbH</a></dd><dt>Position</dt><dd><a href="#" data-demo="Position details" data-role-name>Senior Software Engineer</a></dd><dt>Attempt</dt><dd>Autumn 2026</dd><dt>Applied</dt><dd>12 October 2026</dd><dt>Outcome</dt><dd>Not recorded</dd></dl><div class="sc-note"><h3>Application notes</h3><p>Explore ownership of the platform and how product teams work with engineering.</p></div></section>
+      <section class="sc-panel"><div class="sc-panel-head"><h2>Contacts</h2><div class="sc-mini-actions"><button class="sc-icon" aria-label="Manage application contacts" data-tooltip="Manage application contacts" data-command="contacts"><i data-lucide="users" aria-hidden="true"></i></button><button class="sc-icon" aria-label="Add company contact" data-tooltip="Add company contact" data-command="new-contact"><i data-lucide="plus" aria-hidden="true"></i></button></div></div><div class="sc-rich"><h3>Mara Beispiel</h3><p class="sc-muted">Engineering lead · company contact</p><a href="#" data-demo="Contact details">mara@nordlicht.example</a></div><p class="sc-empty" data-empty hidden>No contacts linked to this application.</p><div class="sc-before-only"><label>Explicit application contacts<select><option>Mara Beispiel</option></select></label><button data-command="contacts">Save application contacts</button></div></section>
+    </div>
+    <div class="sc-column sc-work">
+      <section class="sc-panel"><div class="sc-panel-head"><h2>Interview rounds</h2><button class="sc-icon" aria-label="Add interview" data-tooltip="Add interview" data-demo="Add interview"><i data-lucide="plus" aria-hidden="true"></i></button></div><div class="sc-rich"><article class="sc-record"><div class="sc-row"><div><h3>Technical conversation</h3><p class="sc-muted">20 October 2026 · 10:00 · Video · Scheduled</p></div><span class="sc-tag">Next round</span></div><p>Discuss architecture, team ownership and delivery practices.</p><button class="sc-primary" data-command="prepare"><i data-lucide="clipboard-list" aria-hidden="true"></i> Prepare interview</button> <button data-command="workspace">Review Workspace</button></article><article class="sc-record"><h3>Introductory call</h3><p class="sc-muted">14 October 2026 · Completed</p><a href="#" data-demo="Completed interview details">Open interview and private review</a></article></div><div class="sc-empty" data-empty hidden><p>No interviews yet.</p><button data-demo="Add interview">Add interview</button></div></section>
+      <section class="sc-panel"><div class="sc-panel-head"><h2>Next actions</h2><button class="sc-icon" aria-label="Add next action" data-tooltip="Add next action" data-demo="Add next action"><i data-lucide="plus" aria-hidden="true"></i></button></div><div class="sc-rich"><div class="sc-row"><div><a href="#" data-demo="Next action details">Prepare examples of cross-team technical leadership</a><p class="sc-muted">Due 19 October 2026</p></div><button class="sc-icon" aria-label="Complete preparation action" data-tooltip="Complete preparation action" data-command="complete"><i data-lucide="check" aria-hidden="true"></i></button></div></div><p class="sc-empty" data-empty hidden>No open actions.</p></section>
+    </div>
+    <div class="sc-column sc-support">
+      <section class="sc-panel"><div class="sc-panel-head"><h2>Timeline</h2><button class="sc-icon" aria-label="Add timeline event" data-tooltip="Add event" data-demo="Add timeline event"><i data-lucide="plus" aria-hidden="true"></i></button></div><div class="sc-rich"><article class="sc-record"><p class="sc-muted">15 October · Interview scheduled</p><p>Technical conversation confirmed with Mara.</p></article><article class="sc-record"><p class="sc-muted">12 October · Application sent</p><p>Autumn application and selected CV recorded.</p></article></div><p class="sc-empty" data-empty hidden>No timeline events in this view.</p><a href="#" data-demo="Full timeline">Full timeline <span aria-hidden="true">→</span></a></section>
+      <section class="sc-panel"><div class="sc-panel-head"><h2>Submitted files</h2><button class="sc-icon" aria-label="Record externally sent submission" data-tooltip="Record externally sent submission" data-demo="Review externally sent submission"><i data-lucide="plus" aria-hidden="true"></i></button></div><div class="sc-rich"><p class="sc-muted">12 October 2026 · Submission #1</p><div class="sc-row"><div><a class="sc-file" href="#" data-demo="Exact submitted CV">CV-Platform-Engineering-EN.pdf</a><p class="sc-muted">Exact recorded version</p></div><button class="sc-icon" aria-label="Download exact submitted CV" data-tooltip="Download exact submitted CV" data-demo="Download exact submitted CV"><i data-lucide="download" aria-hidden="true"></i></button></div></div><p class="sc-empty" data-empty hidden>No externally sent submission recorded.</p></section>
+      <section class="sc-panel"><div class="sc-panel-head"><h2>Documents</h2><div class="sc-mini-actions"><button class="sc-icon" aria-label="Attach existing document" data-tooltip="Attach existing document" data-command="attach"><i data-lucide="paperclip" aria-hidden="true"></i></button><button class="sc-icon" aria-label="Import and attach file" data-tooltip="Import and attach file" data-demo="Import and attach file"><i data-lucide="upload" aria-hidden="true"></i></button></div></div><div class="sc-rich" data-document-row><div class="sc-row"><div><a href="#" data-demo="Document details">interview-notes.md</a></div><div class="sc-mini-actions"><button class="sc-icon" aria-label="Download interview-notes.md" data-tooltip="Download notes" data-demo="Download notes"><i data-lucide="download" aria-hidden="true"></i></button><button class="sc-icon" aria-label="Unlink interview-notes.md" data-tooltip="Unlink interview-notes.md" data-command="unlink"><i data-lucide="unlink" aria-hidden="true"></i></button></div></div></div><p class="sc-empty" data-empty hidden>No documents attached.</p><div class="sc-before-only"><label>Existing active document<select><option>Choose a document</option></select></label><button data-command="attach">Attach existing document</button></div></section>
+    </div>
+  </template>
+  <template id="sc-m6-preparation">
+    <div class="sc-column sc-context">
+      <section class="sc-panel"><div class="sc-panel-head"><h2>Interview context</h2></div><dl class="sc-facts"><dt>Company</dt><dd>Nordlicht Systems GmbH</dd><dt>Position</dt><dd data-role-name>Senior Software Engineer</dd><dt>Round</dt><dd>Technical conversation</dd><dt>When</dt><dd>20 October 2026 · 10:00</dd><dt>Participants</dt><dd>Mara Beispiel</dd></dl><div class="sc-note"><h3>Preparation notes</h3><p>Clarify ownership boundaries, engineering expectations and the first three months.</p></div></section>
+      <section class="sc-panel"><div class="sc-panel-head"><h2>Reference material</h2></div><p><a href="#" data-demo="Position details">Open position details</a></p><p><a href="#" data-demo="Exact submitted CV">Open submitted CV</a></p><p class="sc-field-note">Private preparation. Review selected content separately before opening the shared Workspace.</p></section>
+    </div>
+    <div class="sc-column sc-work">
+      <section class="sc-panel"><div class="sc-panel-head"><h2>Questions to ask</h2><button data-command="questions"><i data-lucide="plus" aria-hidden="true"></i> Add questions</button></div><label class="sc-check"><input type="checkbox" data-show-removed> Show removed questions</label><div class="sc-removed" hidden><p class="sc-muted">No removed selections in this example.</p></div><div class="sc-rich"><article class="sc-record" data-question-item><div class="sc-row"><div><h3>How does the team make architecture decisions?</h3></div><div class="sc-mini-actions"><button class="sc-icon" aria-label="Edit prepared architecture question" data-tooltip="Edit wording / answer" data-command="edit-question"><i data-lucide="pencil" aria-hidden="true"></i></button><button class="sc-icon" aria-label="Remove architecture question from preparation" data-tooltip="Remove selection" data-command="remove-question"><i data-lucide="x" aria-hidden="true"></i></button></div></div><p class="sc-muted">Intent</p><p>Understand autonomy and how decisions are communicated.</p><p class="sc-muted">Follow-up</p><p>Can you describe a recent decision that changed after team feedback?</p><a href="#" data-demo="Source employer question">Source question</a><p class="sc-field-note">Prepared wording is a local copy.</p><div class="sc-row"><span class="sc-tag">Team · Architecture</span><button class="sc-icon" aria-label="Move architecture question down" data-tooltip="Move down" data-command="reorder"><i data-lucide="arrow-down" aria-hidden="true"></i></button></div></article><article class="sc-record"><h3>What would success look like after three months?</h3><p>Ask for concrete expectations and the first area of responsibility.</p><button class="sc-icon" aria-label="Edit success question" data-tooltip="Edit wording / answer" data-command="edit-question"><i data-lucide="pencil" aria-hidden="true"></i></button></article></div><div class="sc-empty" data-empty hidden><p>No questions selected.</p><button data-command="questions">Choose from the catalog</button></div><div class="sc-before-only"><label>Catalog selection<select><option>Choose employer questions</option></select></label><button data-command="questions">Add selected questions</button></div></section>
+    </div>
+    <div class="sc-column sc-support">
+      <section class="sc-panel"><div class="sc-panel-head"><h2>STAR experiences</h2><button data-command="experiences"><i data-lucide="plus" aria-hidden="true"></i> Add experiences</button></div><div class="sc-rich"><article class="sc-record"><div class="sc-row"><div><h3>Aligning teams on a platform migration</h3><span class="sc-tag">Leadership · Delivery</span></div><button class="sc-icon" aria-label="Edit rehearsal notes" data-tooltip="Edit rehearsal notes" data-command="rehearsal"><i data-lucide="pencil" aria-hidden="true"></i></button></div><div class="sc-note"><h3>Situation and task</h3><p>Three teams needed a shared migration path without interrupting product delivery.</p><h3>Action</h3><p>Facilitated a decision workshop, agreed ownership and introduced small rollout checkpoints.</p><h3>Result</h3><p>Completed the migration with a shared operating model and clear handover.</p></div><a href="#" data-demo="STAR library experience">Source experience</a><div class="sc-note"><h3>Private rehearsal notes</h3><p>Focus on the disagreement and how the decision changed.</p></div><p class="sc-field-note">Library edits affect selected STAR content; rehearsal notes belong to this interview.</p></article></div><div class="sc-empty" data-empty hidden><p>No experiences selected.</p><button data-command="experiences">Choose an experience</button></div></section>
+    </div>
+  </template>
+  <template id="sc-m6-editor">
+    <div class="sc-column sc-context">
+      <section class="sc-panel"><div class="sc-panel-head"><h2>Position information</h2></div><label>Company (required)<select><option>Nordlicht Systems GmbH</option></select></label><label>Position title (required)<input data-position-title value="Senior Software Engineer" required maxlength="200"></label><label>Opportunity status<select><option>Active</option><option>Paused</option><option>Closed</option></select></label><div class="sc-pair"><label>Discovery date<input type="date" value="2026-10-09"></label><label>Closing date<input type="date"></label></div><label>Original vacancy URL<input type="url" value="https://nordlicht.example/careers/platform"></label><div class="sc-pair"><label>Location<input value="Berlin / remote"></label><label>Employment type<input value="Full time"></label></div></section>
+    </div>
+    <div class="sc-column sc-work">
+      <section class="sc-panel"><div class="sc-panel-head"><h2>Original vacancy description</h2><span class="sc-tag">Preserved source</span></div><div class="sc-read"><h3>Build a reliable platform for product teams</h3><p>We are looking for an engineer who combines hands-on delivery with pragmatic architecture and clear communication.</p><p>You will work with product teams on resilient services, developer experience and a gradual platform migration.</p><h3>Responsibilities</h3><ul><li>Design and operate services with clear ownership.</li><li>Make technical choices collaboratively.</li><li>Support colleagues through reviews and mentoring.</li></ul><h3>Working together</h3><p>The team collaborates remotely with regular sessions in Berlin. The interview will explore practical experience and how you approach trade-offs.</p></div><p class="sc-field-note">Preserved as originally saved. Put corrections in personal notes.</p></section>
+    </div>
+    <div class="sc-column sc-support">
+      <section class="sc-panel"><div class="sc-panel-head"><h2>Your notes</h2><button class="sc-icon" aria-label="Preview note formatting" data-tooltip="Preview formatting" data-command="preview"><i data-lucide="eye" aria-hidden="true"></i></button></div><label>Remote-work notes<textarea>Clarify expected office attendance and whether location affects the role.</textarea></label><label>Personal notes<textarea>Interesting platform ownership scope.
+
+Ask how product teams contribute to architecture decisions.</textarea></label><p class="sc-field-note">Save explicitly. The preserved vacancy text remains unchanged.</p></section>
+    </div>
+  </template>
+  <dialog aria-labelledby="sc-m6-dialog-title" aria-describedby="sc-m6-dialog-description"><h2 id="sc-m6-dialog-title"></h2><div id="sc-m6-dialog-description"></div><footer></footer></dialog>
+  <script>
+  (() => {
+    const root = document.getElementById('scout-m6-review');
+    const designs = [...root.querySelectorAll('[data-variant]')];
+    const modal = root.querySelector('dialog');
+    const title = root.querySelector('#sc-m6-dialog-title');
+    const description = root.querySelector('#sc-m6-dialog-description');
+    const footer = modal.querySelector('footer');
+    const config = { state:'Populated', gaps:24, failure:false };
+    let screen = 'application', dirty = false, lastFocus = null, draft = null, modalDirty = false;
+    const role = 'Senior Software Engineer';
+    const longRole = 'Senior Software Engineer — Platform Architecture, Developer Experience and Cross-Team Technical Leadership';
+    const icon = name => `<i data-lucide="${name}" aria-hidden="true"></i>`;
+    const action = (label, command, primary=false, name='') => `<button type="button" class="${primary?'sc-primary':''}" data-command="${command}">${name?icon(name):''}${label}</button>`;
+    const demo = (label,name='') => `<button type="button" data-demo="${label}">${name?icon(name):''}${label}</button>`;
+    const titles = {application:'Senior Software Engineer',preparation:'Prepare: Technical conversation',editor:'Edit position'};
+    function hydrateIcons() { if (globalThis.lucide) globalThis.lucide.createIcons({attrs:{width:18,height:18}}); }
+    function chrome() {
+      const nav = ['Companies','Positions','Applications','Next actions','Documents','CVs','Employer questions','STAR experiences'];
+      const current = screen === 'editor' ? 'Positions' : 'Applications';
+      return `<header class="sc-nav"><div class="sc-brand"><span class="sc-mark">S</span>Scout</div><nav aria-label="Main navigation">${nav.map(n=>`<a href="#" data-demo="${n} catalog" ${n===current?'aria-current="page"':''}>${n}</a>`).join('')}</nav><span class="sc-local">Personal · Local</span></header>`;
+    }
+    function breadcrumbs() {
+      return `<nav class="sc-crumb" aria-label="Breadcrumb"><a href="#" data-demo="Companies catalog">Companies</a><span aria-hidden="true">›</span><a href="#" data-demo="Company details">Nordlicht Systems GmbH</a><span aria-hidden="true">›</span><a href="#" data-demo="Position details" data-role-name>${role}</a>${screen==='editor'?'<span aria-hidden="true">›</span><span aria-current="page">Edit</span>':`<span aria-hidden="true">›</span><a href="#" data-command="application">Autumn 2026</a>${screen==='preparation'?'<span aria-hidden="true">›</span><span aria-current="page">Technical conversation · Preparation</span>':''}`}</nav>`;
+    }
+    function actions() {
+      const more = `<details><summary>More ${icon('chevron-down')}</summary><div class="sc-menu">${action('Archive '+(screen==='editor'?'position':'application'),'archive')}${demo('Record details')}</div></details>`;
+      if(screen==='editor') return `${action('Save position','save',true,'check')}${action('Cancel','cancel')}<span class="sc-spacer"></span><span class="sc-muted" data-dirty-status>All changes saved</span>`;
+      if(screen==='preparation') return `${action('Review & open Workspace','workspace',true,'panels-top-left')}${action('Interview details','interview')}${action('Add questions','questions',false,'plus')}${action('Add experiences','experiences',false,'plus')}<span class="sc-spacer"></span><span class="sc-muted">Private preparation</span>`;
+      return `${action('Edit application','edit-application',true,'pencil')}${demo('Add interview','plus')}${demo('Add next action','plus')}${demo('Open position','external-link')}<span class="sc-spacer"></span>${more}`;
+    }
+    function render() {
+      designs.forEach(design => {
+        const w = design.querySelector('.sc-window');
+        w.innerHTML = chrome()+`<main class="sc-body"><a class="sc-before-back" href="#" data-demo="Back to ${screen==='editor'?'position':'applications'}">← ${screen==='editor'?'Position details':'Applications'}</a>${breadcrumbs()}<div class="sc-heading"><div><p class="sc-kicker">${screen==='editor'?'Opportunity details':screen==='preparation'?'Interview preparation · Private':'Application · Autumn 2026'}</p><h1 ${screen==='application'?'data-role-name':''}>${titles[screen]}</h1><p class="sc-muted">${screen==='editor'?'Nordlicht Systems GmbH · Only company and title are required.':screen==='preparation'?'Nordlicht Systems GmbH · 20 October 2026 · 10:00':'Nordlicht Systems GmbH · Applied 12 October 2026'}</p></div><span class="sc-tag">${screen==='editor'?'Editing':screen==='preparation'?'Scheduled':'Interviewing'}</span></div><div class="sc-actions" aria-label="${screen} actions">${actions()}</div><div class="sc-columns"></div><div class="sc-bottom">${screen==='editor'?'Original source preserved · Manual saving':screen==='preparation'?'Prepared question wording is a copy · STAR source stays linked · Sharing requires separate approval':'Local records · Original documents and submission history preserved'}</div></main>`;
+        const content = root.querySelector('#sc-m6-'+screen).content.cloneNode(true);
+        w.querySelector('.sc-columns').append(content);
+        if(screen==='editor' && draft) w.querySelectorAll('input,textarea,select').forEach((e,i)=>{if(i<draft.length)e.value=draft[i];});
+      });
+      applyState(); updateDirty(); hydrateIcons();
+      root.querySelectorAll('[data-screen]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.screen===screen)));
+    }
+    function applyState() {
+      root.querySelectorAll('.sc-rich').forEach(e=>e.hidden=config.state==='Sparse');
+      root.querySelectorAll('[data-empty]').forEach(e=>e.hidden=config.state!=='Sparse');
+      root.querySelectorAll('[data-role-name]').forEach(e=>e.textContent=config.state==='Long names'?longRole:role);
+      designs.forEach(d=>{d.querySelector('.sc-columns').style.gap=config.gaps+'px';});
+    }
+    function remember() {
+      if(window.openai?.setWidgetState) window.openai.setWidgetState({modelContent:{screen,state:config.state},privateContent:{}}).catch(()=>{});
+    }
+    function updateDirty() { root.querySelectorAll('[data-dirty-status]').forEach(e=>e.textContent=dirty?'Unsaved changes':'All changes saved'); }
+    function close(force=false) {
+      if(modalDirty&&!force) {
+        const oldHeading=title.textContent, oldBody=[...description.childNodes], oldButtons=[...footer.childNodes];
+        dialog('Discard these changes?','<p>The changes in this dialog have not been saved.</p>',[{label:'Keep editing',primary:true,run:()=>{title.textContent=oldHeading;description.replaceChildren(...oldBody);footer.replaceChildren(...oldButtons);modalDirty=true;description.querySelector('input,textarea,select')?.focus();}},{label:'Discard changes',run:()=>close(true)}]);
+        return;
+      }
+      modalDirty=false;if(modal.open)modal.close(); lastFocus?.focus();
+    }
+    function dialog(heading,content,buttons) {
+      if(modal.open)modal.close();else lastFocus=document.activeElement;
+      modalDirty=false;title.textContent=heading; description.innerHTML=content; footer.replaceChildren();
+      buttons.forEach(spec=>{const b=document.createElement('button');b.type='button';b.textContent=spec.label;b.className=spec.primary?'sc-primary':'';b.addEventListener('click',()=>spec.run());footer.append(b);});
+      modal.showModal(); hydrateIcons();
+    }
+    function acknowledge(heading,content) { dialog(heading,content,[{label:'Done',primary:true,run:close}]); }
+    function saveOutcome(heading,onSuccess) {
+      if(config.failure) {
+        if(modal.open&&description.querySelector('input,textarea,select')) {
+          let error=description.querySelector('.sc-dialog-error');if(!error){error=document.createElement('p');error.className='sc-dialog-error';error.setAttribute('role','alert');description.prepend(error);}
+          error.textContent='Save could not be confirmed. Your inputs are retained. Check the saved record before starting another attempt.';
+        } else dialog('Save could not be confirmed','<p class="sc-dialog-error">Your draft is retained. Check the saved record before starting a new attempt.</p><p>Prototype failure state; no data was written.</p>',[{label:'Keep editing',primary:true,run:close}]);
+        return;
+      }
+      modalDirty=false;onSuccess?.(); acknowledge(heading,'<p>Prototype of the confirmed-success dialog. No application data was written.</p>');
+    }
+    function changeScreen(next) {
+      const go=()=>{close();screen=next;dirty=false;draft=null;render();remember();};
+      if(dirty) dialog('Leave without saving?','<p>Your position changes have not been saved.</p>',[{label:'Keep editing',primary:true,run:close},{label:'Leave without saving',run:go}]); else go();
+    }
+    function picker(heading,items,label) {
+      dialog(heading,items.map((item,i)=>`<label class="sc-check"><input type="checkbox" ${i===0?'checked':''}>${item}</label>`).join(''),[{label:'Cancel',run:close},{label,primary:true,run:()=>saveOutcome(label+' — saved')}]);
+    }
+    function run(command,source) {
+      if(command==='application'||command==='prepare'){changeScreen(command==='prepare'?'preparation':'application');return;}
+      if(command==='contacts'){picker('Manage application contacts',['Mara Beispiel · Engineering lead','Alex Muster · Recruiter'],'Save contacts');return;}
+      if(command==='questions'){picker('Add employer questions',['How does the team make architecture decisions?','What would success look like after three months?'],'Add selected questions');return;}
+      if(command==='experiences'){picker('Add STAR experiences',['Aligning teams on a platform migration','Improving reliability without blocking delivery'],'Add selected experiences');return;}
+      if(command==='attach'){picker('Attach existing document',['interview-notes.md','vacancy-original.pdf'],'Attach selected document');return;}
+      if(command==='new-contact'){
+        dialog('Add company contact','<label>Name (required)<input data-contact-name placeholder="Full name" required></label><label>Role<input placeholder="Role or relationship"></label><div class="sc-pair"><label>Email<input type="email" placeholder="name@company.example"></label><label>Phone<input type="tel"></label></div><label>Profile URL<input type="url"></label><label>Notes<textarea></textarea></label><p class="sc-field-note">Company: Nordlicht Systems GmbH. Creating a company contact does not silently change explicit application selections.</p>',[{label:'Cancel',run:close},{label:'Save contact',primary:true,run:()=>{if(!description.querySelector('[data-contact-name]').reportValidity())return;saveOutcome('Contact saved');}}]);return;
+      }
+      if(command==='edit-application'){
+        dialog('Edit application','<p>Nordlicht Systems GmbH · Senior Software Engineer</p><label>Attempt label<input value="Autumn 2026"></label><label>Status<select><option>Interviewing</option><option>Applied</option></select></label><div class="sc-pair"><label>Applied<input type="date" value="2026-10-12"></label><label>Outcome date<input type="date"></label></div><label>Outcome notes<textarea></textarea></label><label>Application notes<textarea>Explore ownership of the platform.</textarea></label>',[{label:'Cancel',run:close},{label:'Save application',primary:true,run:()=>saveOutcome('Application saved')}]);return;
+      }
+      if(command==='unlink'||command==='archive'||command==='remove-question') {
+        const unlink=command==='unlink', remove=command==='remove-question';
+        dialog(unlink?'Unlink interview-notes.md?':remove?'Remove this question from preparation?':'Archive this application?',`<p>${unlink?'Only this application link will be removed. The original file and other associations remain.':remove?'The question remains in the catalog. This interview selection and its history are preserved.':'The application leaves the active list. Its interviews, files and history are preserved; it can be restored.'}</p>`,[{label:'Cancel',primary:true,run:close},{label:unlink?'Remove link':remove?'Remove selection':'Archive application',run:()=>saveOutcome(unlink?'Link removed':remove?'Selection removed':'Application archived',()=>{if(unlink)source.closest('[data-document-row]').hidden=true;if(remove)source.closest('[data-question-item]').hidden=true;})}]);return;
+      }
+      if(command==='save') {
+        const position=source.closest('.sc-window').querySelector('[data-position-title]');
+        if(!position.reportValidity())return;
+        saveOutcome('Position saved',()=>{dirty=false;updateDirty();});return;
+      }
+      if(command==='cancel'){changeScreen('application');return;}
+      if(command==='workspace'){acknowledge('Private Workspace review','<p>The live workflow first reviews and explicitly approves selected fields. This proposal does not open a shared Workspace or bypass approval.</p>');return;}
+      if(command==='edit-question'||command==='rehearsal'){
+        dialog(command==='rehearsal'?'Edit private rehearsal notes':'Edit prepared wording / answer',command==='rehearsal'?'<label>Rehearsal notes<textarea>Focus on the disagreement and how the decision changed.</textarea></label>':'<label>Prepared question<textarea>How does the team make architecture decisions?</textarea></label><label>Intent<textarea>Understand autonomy and communication.</textarea></label><label>Suggested follow-ups<textarea>Describe a decision changed after feedback.</textarea></label><label>Private preparation notes<textarea></textarea></label><label>Answer for this interview<textarea></textarea></label><p class="sc-field-note">Large edits retain their full-page route in the final design.</p>',[{label:'Cancel',run:close},{label:'Save changes',primary:true,run:()=>saveOutcome('Changes saved')}]);return;
+      }
+      if(command==='preview') { const text=source.closest('.sc-window').querySelectorAll('textarea')[1].value;dialog('Preview personal notes','<p data-preview-text></p>',[{label:'Close preview',primary:true,run:close}]);description.querySelector('[data-preview-text]').textContent=text;return; }
+      if(command==='reorder'){source.closest('[data-question-item]').parentElement.append(source.closest('[data-question-item]'));return;}
+      if(command==='complete'){source.disabled=true;source.setAttribute('aria-label','Action completed in prototype');source.closest('.sc-row').querySelector('p').textContent='Completed in this prototype';return;}
+      acknowledge('Interview details','<p>This route remains directly available in Scout. The review focuses on layout rather than implementing navigation.</p>');
+    }
+    root.addEventListener('click',e=>{
+      const review=e.target.closest('[data-screen]');if(review){changeScreen(review.dataset.screen);return;}
+      const command=e.target.closest('[data-command]');if(command){e.preventDefault();run(command.dataset.command,command);return;}
+      const d=e.target.closest('[data-demo]');if(d){e.preventDefault();acknowledge(d.dataset.demo,'<p>Existing action retained in the proposed layout. This review does not navigate, download, send or change application records.</p>');}
+    });
+    root.addEventListener('input',e=>{
+      if(screen==='editor'&&e.target.closest('.sc-window')) {dirty=true;draft=[...e.target.closest('.sc-window').querySelectorAll('input,textarea,select')].map(i=>i.value);updateDirty();}
+    });
+    root.addEventListener('change',e=>{if(e.target.matches('[data-show-removed]')){const panel=e.target.closest('.sc-panel');panel.querySelector('.sc-removed').hidden=!e.target.checked;panel.querySelector('.sc-rich').hidden=e.target.checked||config.state==='Sparse';}});
+    modal.addEventListener('cancel',e=>{e.preventDefault();close();});
+    modal.addEventListener('input',()=>{modalDirty=true;});
+    new ResizeObserver(()=>{root.querySelectorAll('.sc-viewport').forEach(e=>e.textContent=Math.round(root.getBoundingClientRect().width)+' CSS px');}).observe(root);
+    const saved=window.openai?.widgetState?.modelContent;
+    if(saved&&['application','preparation','editor'].includes(saved.screen))screen=saved.screen;
+    if(saved&&['Populated','Sparse','Long names'].includes(saved.state))config.state=saved.state;
+    render();
+    window.addEventListener('openai:set_globals',e=>{const incoming=e.detail?.globals?.widgetState?.modelContent;if(!dirty&&incoming){if(['application','preparation','editor'].includes(incoming.screen))screen=incoming.screen;if(['Populated','Sparse','Long names'].includes(incoming.state))config.state=incoming.state;render();}});
+    if(globalThis.Tweak) { const tweak=new Tweak({container:root,onChange:()=>{applyState();remember();}});tweak.addSelect(config,'state',{label:'Sample content',options:['Populated','Sparse','Long names']});tweak.addSlider(config,'gaps',{label:'Column gap',min:16,max:40,step:4,unit:'px'});tweak.addToggle(config,'failure',{label:'Simulate save failure'}); }
+    root.reviewSetState = state => {config.state=state;applyState();};
+    root.reviewSetFailure = value => {config.failure=Boolean(value);};
+  })();
+  </script>
+</div>

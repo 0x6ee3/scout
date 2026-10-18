@@ -8,14 +8,14 @@
 @if(missing) { <p>Experience not found.</p> } else {
 <DraftForm Model="@model" Save="SaveAsync" CancelUrl="@Back" SaveLabel="Save experience" FormName="ExperienceEditor">
 <div class="field"><label for="title">Title (required)</label><InputText id="title" @bind-Value="model.Title" maxlength="200" /></div>
-<div class="field"><label for="cue">Memory cue</label><InputTextArea id="cue" @bind-Value="model.MemoryCue" maxlength="1000" /></div>
-<div class="field"><label for="situation">Situation</label><InputTextArea id="situation" @bind-Value="model.Situation" maxlength="100000" /></div>
-<div class="field"><label for="task">Task</label><InputTextArea id="task" @bind-Value="model.Task" maxlength="100000" /></div>
-<div class="field"><label for="action">Action</label><InputTextArea id="action" @bind-Value="model.Action" maxlength="100000" /></div>
-<div class="field"><label for="result">Result</label><InputTextArea id="result" @bind-Value="model.Result" maxlength="100000" /></div>
-<div class="field"><label for="reflection">Reflection</label><InputTextArea id="reflection" @bind-Value="model.Reflection" maxlength="100000" /></div>
-<div class="field"><label for="useful">Useful for / likely prompts</label><InputTextArea id="useful" @bind-Value="model.UsefulFor" maxlength="100000" /></div>
-<div class="field"><label for="notes">Private library notes</label><InputTextArea id="notes" @bind-Value="model.Notes" maxlength="100000" /></div>
+<div class="field"><label for="cue">Memory cue</label><InputTextArea id="cue" @bind-Value="model.MemoryCue" maxlength="1000" /><MarkdownPreview Text="@model.MemoryCue" /></div>
+<div class="field"><label for="situation">Situation</label><InputTextArea id="situation" @bind-Value="model.Situation" maxlength="100000" /><MarkdownPreview Text="@model.Situation" /></div>
+<div class="field"><label for="task">Task</label><InputTextArea id="task" @bind-Value="model.Task" maxlength="100000" /><MarkdownPreview Text="@model.Task" /></div>
+<div class="field"><label for="action">Action</label><InputTextArea id="action" @bind-Value="model.Action" maxlength="100000" /><MarkdownPreview Text="@model.Action" /></div>
+<div class="field"><label for="result">Result</label><InputTextArea id="result" @bind-Value="model.Result" maxlength="100000" /><MarkdownPreview Text="@model.Result" /></div>
+<div class="field"><label for="reflection">Reflection</label><InputTextArea id="reflection" @bind-Value="model.Reflection" maxlength="100000" /><MarkdownPreview Text="@model.Reflection" /></div>
+<div class="field"><label for="useful">Useful for / likely prompts</label><InputTextArea id="useful" @bind-Value="model.UsefulFor" maxlength="100000" /><MarkdownPreview Text="@model.UsefulFor" /></div>
+<div class="field"><label for="notes">Private library notes</label><InputTextArea id="notes" @bind-Value="model.Notes" maxlength="100000" /><MarkdownPreview Text="@model.Notes" /></div>
 <TagEditor @bind-Value="model.Tags" />
 </DraftForm> }
 </LoadPanel>

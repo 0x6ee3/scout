@@ -14,7 +14,7 @@
     private DocumentEditModel model=new();private IBrowserFile? selected;private bool missing;private string? name;
     private string Back=>Id.HasValue?CatalogLinks.Record($"/documents/{Id}",ListQuery):CatalogLinks.List("/documents",ListQuery);
     private async Task LoadAsync(){missing=false;model=new();if(Id.HasValue){var d=await Documents.GetAsync(Id.Value);missing=d is null;if(d is not null){name=d.OriginalName;model=new(){Category=d.Category,Description=d.Description};}}}
-    private async Task<string> SaveAsync(){var id=Id;if(id.HasValue){if(!await Documents.UpdateAsync(id.Value,model))throw new ValidationException("Document no longer exists.");}else{if(selected is null)throw new ValidationException("Choose a file.");await using var input=selected.OpenReadStream(DocumentFileStore.MaximumBytes);id=await Documents.ImportAsync(selected.Name,input,model,new(CatalogLinks.ParseEnum<DocumentOwnerKind>(OwnerKind)??DocumentOwnerKind.None,OwnerId));}return CatalogLinks.Record($"/documents/{id}",ListQuery);}
+    private async Task<string> SaveAsync(){var id=Id;if(id.HasValue){if(!await Documents.UpdateAsync(id.Value,model))throw new ValidationException("Document no longer exists.");}else{if(selected is null)throw new ValidationException("Choose a file.");await using var input=selected.OpenReadStream(DocumentFileStore.LimitFor(selected.Name));id=await Documents.ImportAsync(selected.Name,input,model,new(CatalogLinks.ParseEnum<DocumentOwnerKind>(OwnerKind)??DocumentOwnerKind.None,OwnerId));}return CatalogLinks.Record($"/documents/{id}",ListQuery);}
 }
 
 

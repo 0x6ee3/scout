@@ -33,7 +33,7 @@ public sealed class StoragePathsTests
         await File.WriteAllTextAsync(original, "Keep this original.", TestContext.Current.CancellationToken);
         database.Paths.CreateDirectories();
         Assert.Equal("Keep this original.", await File.ReadAllTextAsync(original, TestContext.Current.CancellationToken));
-        Assert.Equal(new[] { "assets", "database" }, Directory.GetDirectories(database.Paths.Root)
+        Assert.Equal(new[] { "assets", "database", "recordings" }, Directory.GetDirectories(database.Paths.Root)
             .Select(Path.GetFileName).OrderBy(name => name).ToArray());
     }
 

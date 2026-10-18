@@ -16,7 +16,7 @@ else if (failed)
 else if (notFound) { <h1>Position not found</h1><p><a href="/positions">Return to positions</a> to find an existing record.</p> }
 else if (companies.Count == 0)
 {
-    <h1>Add position</h1><p>Add an active company first, then return here to create its position.</p><a class="button" href="/companies/new">Add company</a>
+    <h1>Add position</h1><p>Add an active company first, then return here to create its position.</p><ActionLink Href="/companies/new" Label="Add company" />
 }
 else
 {
@@ -25,8 +25,10 @@ else
         <EditForm EditContext="editContext" OnValidSubmit="SaveAsync" FormName="PositionEditor">
             <DataAnnotationsValidator /><ValidationSummary />
             @if (error is not null) { <div class="message error" role="alert">@error</div> }
-            <fieldset disabled="@saving">
+            <div class="form-actions"><button type="submit" disabled="@(saving || savedUrl is not null)"><UiIcon Name="check" />@(saving ? "Saving…" : "Save position")</button><a href="@CancelUrl">Cancel</a></div>
+            <fieldset class="editor-fields" disabled="@(saving || savedUrl is not null)">
                 <legend class="visually-hidden">Position information</legend>
+                <div class="editor-column">
                 <div class="field"><label for="position-company">Company (required)</label>
                     <InputSelect id="position-company" @bind-Value="model.CompanyId"><option value="0">Choose a company</option>
                         @foreach (var company in companies) { <option value="@company.Id">@company.Name@(company.IsArchived ? " (archived)" : "")</option> }
@@ -39,25 +41,25 @@ else
                 <div class="field"><label for="position-url">Original vacancy URL</label><InputText id="position-url" @bind-Value="model.OriginalVacancyUrl" maxlength="2048" inputmode="url" aria-describedby="vacancy-url-hint" /><p class="field-hint" id="vacancy-url-hint">A complete HTTP/HTTPS address. Scout does not fetch or scrape it.</p><ValidationMessage For="() => model.OriginalVacancyUrl" /></div>
                 <div class="field"><label for="position-location">Location</label><InputText id="position-location" @bind-Value="model.Location" maxlength="300" /><ValidationMessage For="() => model.Location" /></div>
                 <div class="field"><label for="position-employment">Employment type</label><InputText id="position-employment" @bind-Value="model.EmploymentType" maxlength="100" /><ValidationMessage For="() => model.EmploymentType" /></div>
+                </div><div class="editor-column">
                 @if (originalSnapshot is not null)
                 {
-                    <div class="field"><h2>Original vacancy description</h2><p class="field-hint">Preserved as originally saved. Put corrections in personal notes.</p><p class="plain-text preserved-text">@originalSnapshot</p></div>
+                    <div class="field"><h2>Original vacancy description</h2><p class="field-hint">Preserved as originally saved. Put corrections in personal notes.</p><MarkdownText Text="@originalSnapshot" /></div>
                 }
                 else
                 {
-                    <div class="field"><label for="position-description">Original vacancy description</label><InputTextArea id="position-description" @bind-Value="model.JobDescriptionSnapshot" rows="8" maxlength="100000" aria-describedby="snapshot-hint" /><p id="snapshot-hint" class="field-hint">Paste the original text (up to 100,000 characters). Once saved, it stays read-only.</p><ValidationMessage For="() => model.JobDescriptionSnapshot" /></div>
+                    <div class="field"><label for="position-description">Original vacancy description</label><InputTextArea id="position-description" @bind-Value="model.JobDescriptionSnapshot" rows="8" maxlength="100000" aria-describedby="snapshot-hint" /><MarkdownPreview Text="@model.JobDescriptionSnapshot" /><p id="snapshot-hint" class="field-hint">Paste the original text (up to 100,000 characters). Once saved, it stays read-only.</p><ValidationMessage For="() => model.JobDescriptionSnapshot" /></div>
                 }
-                <div class="field"><label for="position-remote">Remote-work notes</label><InputTextArea id="position-remote" @bind-Value="model.RemoteWorkNotes" rows="4" maxlength="100000" /><ValidationMessage For="() => model.RemoteWorkNotes" /></div>
-                <div class="field"><label for="position-notes">Personal notes</label><InputTextArea id="position-notes" @bind-Value="model.PersonalNotes" rows="6" maxlength="100000" /><ValidationMessage For="() => model.PersonalNotes" /></div>
-                <div class="form-actions"><button type="submit" disabled="@saving">@(saving ? "Saving…" : "Save position")</button><a href="@CancelUrl">Cancel</a></div>
+                </div><div class="editor-column">
+                <div class="field"><label for="position-remote">Remote-work notes</label><InputTextArea id="position-remote" @bind-Value="model.RemoteWorkNotes" rows="4" maxlength="100000" /><MarkdownPreview Text="@model.RemoteWorkNotes" /><ValidationMessage For="() => model.RemoteWorkNotes" /></div>
+                <div class="field"><label for="position-notes">Personal notes</label><InputTextArea id="position-notes" @bind-Value="model.PersonalNotes" rows="6" maxlength="100000" /><MarkdownPreview Text="@model.PersonalNotes" /><ValidationMessage For="() => model.PersonalNotes" /></div>
+                </div>
             </fieldset>
         </EditForm>
     </section>
     <NavigationLock ConfirmExternalNavigation="@(saving || editContext.IsModified())" OnBeforeInternalNavigation="BeforeNavigation" />
-    @if (pendingNavigation is not null)
-    {
-        <div class="message" role="alert"><p>You have unsaved position details. Leave without saving?</p><button class="secondary" @onclick="Leave">Leave without saving</button><button @onclick="() => pendingNavigation = null">Keep editing</button></div>
-    }
+    <UiDialog Open="@(pendingNavigation is not null)" Title="Leave without saving?" OnCancel="()=>pendingNavigation=null"><ChildContent><p>You have unsaved position details.</p></ChildContent><Footer><button type="button" @onclick="()=>pendingNavigation=null">Keep editing</button><button type="button" class="secondary" @onclick="Leave">Leave without saving</button></Footer></UiDialog>
+    <UiDialog Open="@(savedUrl is not null)" Title="Position saved" OnCancel="FinishSave"><ChildContent><p>Your position changes were saved. The original vacancy description remains preserved.</p></ChildContent><Footer><button @onclick="FinishSave">Done</button></Footer></UiDialog>
 }
 @code {
     [Parameter] public int? Id { get; set; }
@@ -68,7 +70,7 @@ else
     private IReadOnlyList<CompanyOption> companies = [];
     private string? originalSnapshot;
     private bool loading = true, failed, notFound, saving;
-    private string? error, pendingNavigation;
+    private string? error, pendingNavigation, savedUrl;
     private string CancelUrl => Id.HasValue ? CatalogLinks.Record($"/positions/{Id}", ListQuery) : CatalogLinks.List("/positions", ListQuery);
     protected override Task OnParametersSetAsync() => LoadAsync();
     private async Task LoadAsync()
@@ -103,7 +105,7 @@ else
     }
     private async Task SaveAsync()
     {
-        if (saving) return;
+        if (saving || savedUrl is not null) return;
         saving = true; error = null;
         try
         {
@@ -114,7 +116,7 @@ else
             }
             else { id = await Positions.CreateAsync(model); }
             editContext.MarkAsUnmodified(); saving = false;
-            Navigation.NavigateTo(CatalogLinks.Record($"/positions/{id}", ListQuery));
+            savedUrl = CatalogLinks.Record($"/positions/{id}", ListQuery);
         }
         catch (ValidationException ex) { error = ex.Message; }
         catch (Exception ex) when (ex is Microsoft.Data.Sqlite.SqliteException or Microsoft.EntityFrameworkCore.DbUpdateException)
@@ -126,6 +128,7 @@ else
         if (saving) { context.PreventNavigation(); return; }
         if (editContext.IsModified()) { context.PreventNavigation(); pendingNavigation = context.TargetLocation; }
     }
+    private void FinishSave() { var target=savedUrl; savedUrl=null; if(target is not null) Navigation.NavigateTo(target); }
     private void Leave()
     {
         var destination = pendingNavigation!; pendingNavigation = null; editContext.MarkAsUnmodified(); Navigation.NavigateTo(destination);
