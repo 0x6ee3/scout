@@ -7,6 +7,11 @@ Use Architecture Decision Records (ADRs) to explain significant choices and why 
 | [0001 — Product development cycles and Scout.Scribe](0001-product-development-cycles.md) | Accepted | Independent product cycles, historical documentation and companion naming. |
 | [0002 — Web v1 desktop UX](0002-web-v1-desktop-ux.md) | Accepted; implemented in M6 | Finish Web first; 4K composition, page actions and central dialogs. |
 | [0003 — Shared Web presentation patterns](0003-web-presentation-patterns.md) | Accepted and implemented | Work centered composition, shared forms, native dialogs and the private/shared layout boundary. |
+| [0004 — Scribe recording baseline](0004-scribe-recording-baseline.md) | Accepted; partially superseded by [0005](0005-scribe-audio-durability.md) and [0006](0006-scribe-default-devices-and-capture-stack.md) | Initial recording baseline; successor records refine format, durability, default devices and stack. |
+| [0005 — Scribe audio format and crash durability](0005-scribe-audio-durability.md) | Accepted; encoder/checkpoint details superseded by [0006](0006-scribe-default-devices-and-capture-stack.md) | Windows Forms, mono MP3 256 kbps, playable checkpointed audio after crashes and best-effort tray cleanup. |
+| [0006 — Scribe default devices and capture stack](0006-scribe-default-devices-and-capture-stack.md) | Accepted; implementation pending | NAudio/WMF, Windows defaults without device selectors, five-second checkpoints and Windows x64/.NET 10. |
+| [0007 — Scribe native-format capture and separate outputs](0007-scribe-native-separate-capture.md) | Accepted; refactored, hardware gates pending | Partially supersedes 0004–0006: native-format capture and two independently converted MP3s for testing. |
+| [0008 — Scribe playback before listening volume](0008-scribe-playback-before-listening-volume.md) | Accepted; LG/AMD volume independence verified | Partially supersedes 0006–0007: endpoint-independent application playback, default microphone and two files; no volume compensation. |
 
 ## Convention
 

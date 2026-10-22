@@ -1,22 +1,24 @@
 # Scout.Scribe — Product
 
-Status: planned product; no desktop executable or processing features are implemented yet. This living document describes direction; consult the [Scribe v1 cycle](../../cycles/scout-scribe-v1/README.md) for milestone scope and evidence.
+Status: recording experiment and initial tray/single-instance shell implemented; real-device acceptance, persistent settings and remaining M1 reliability work are pending. No transcription/extraction features are implemented. This living document describes direction; consult the [Scribe v1 cycle](../../cycles/scout-scribe-v1/README.md) for milestone scope and evidence.
 
-Scout.Scribe turns consented conversations into reviewable local material: recorded audio, transcripts and proposed facts. It is a small Windows desktop companion, primarily operated through the system tray with compact settings/status and processing review windows as needed. The name covers the complete workflow rather than capture alone.
+Scout.Scribe turns consented conversations into reviewable local material: recorded audio, transcripts and proposed facts. It targets the latest generally available Windows 11 release only, primarily through the tray with small settings dialogs and later processing review windows as needed. Older Windows versions are unsupported; a possible macOS application is separate. The name covers the complete workflow rather than capture alone.
 
 ## Capabilities by milestone
 
 | Scribe v1 milestone | Intended outcome |
 |---|---|
-| M1 — Recording | Explicitly start/stop microphone and selected playback capture, see clear status, preserve playable audio and handle interruption. |
+| M1 — Recording | Explicitly start/stop default-microphone and application-playback capture, see clear tray status, preserve playable audio and handle application interruption. |
 | M2 — Local transcription | Turn a completed or externally supplied recording into a reviewed, portable UTF-8 transcript using local speech-to-text. |
 | M3 — Fact extraction and review | Process a transcript or manually supplied text with a local LLM; inspect, correct, reject or approve source-linked proposals and save a separate reviewed result. |
 
-Capture works without transcription or LLM tools. Transcription accepts existing audio; extraction accepts existing text. Starting the application never starts recording or downloads models. Recording requires explicit initiation after participant consent obtained outside the application. Processing is local and explicitly selected or enabled through an opt-in post-stop transcription setting.
+Capture works without transcription or LLM tools. Transcription accepts existing audio; extraction accepts existing text. Launch never starts recording or downloads models. Consent is obtained outside Scribe before Record, with no prompt or acknowledgment storage. The tray distinguishes recording from idle. Each Start resolves Windows' default microphone; Stop and Start after changing it. Playback uses application loopback before Windows listening-volume processing, across all output devices, excluding Scribe and its descendants. No device selector, inverse-volume gain or normalization is applied. The current experiment saves separate `microphone.mp3` and `playback.mp3` files in a timestamped session directory. Failure preserves partial outputs; the user restarts manually into a new session. Later local processing is explicitly selected or enabled through an opt-in post-stop transcription setting. See [ADR 0008](../../engineering/decisions/0008-scribe-playback-before-listening-volume.md).
+
+M1 uses .NET 10 Windows Forms on Windows x64, NAudio native-format capture and independent Windows Media Foundation conversion to two mono MP3s at 256 kbps each. Typical 60–90 minute interviews produce roughly 230–346 MB total before small overheads. Continuously write with five-second checkpoints for both files; committed audio must remain playable after an application crash without repair, with the remaining tail measured during implementation. Crash handlers attempt cleanup but are not the preservation mechanism. Whole-system crash, blue-screen and power-outage recovery are outside M1. See the [audio durability decision](../../engineering/decisions/0005-scribe-audio-durability.md), [capture/default-device successor](../../engineering/decisions/0006-scribe-default-devices-and-capture-stack.md) and [native/separate-output decision](../../engineering/decisions/0007-scribe-native-separate-capture.md).
 
 ## Relationship with Scout.Web
 
-Scribe runs independently of Web and never needs its database or interview IDs. Web remains usable with other audio/transcript tools or manual notes alone. Start with manual import of finalized audio and UTF-8 TXT through Web's existing workflows; the user selects the interview and any optional recording association there. A Scribe acknowledgment does not automatically supply Web's per-file recording acknowledgment.
+Scribe runs independently of Web and never needs its database or interview IDs. Web remains usable with other audio/transcript tools or manual notes alone. Start with manual import of finalized audio and UTF-8 TXT through Web's existing workflows; the user selects the interview and any optional recording association there. Web retains its per-file recording acknowledgment; Scribe does not collect one. Integration and interview-aware recording reminders are unplanned.
 
 LLM proposals are not verified facts. The initial result is a separate reviewed text artifact; the user can save it or copy approved information into Web. Automatic structured transfer, browser control and richer provenance ingestion require later integration design.
 

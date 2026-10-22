@@ -1,12 +1,14 @@
 # Scout.Scribe v1 — Roadmap
 
-Date: 16 October 2026. A separate product development cycle for recording, transcription and local fact extraction. All milestones below are planned, not delivered. Detailed later plans must use earlier delivery evidence rather than assume proposals worked unchanged.
+Date: 16 October 2026; updated 21 October 2026. A separate product development cycle for recording, transcription and local fact extraction. M1 package 1 has an [implemented capture experiment](milestones/MILESTONE_1_CAPTURE_EXPERIMENT.md) with synthetic verification; hardware acceptance and remaining packages are pending. No milestone is delivered yet. Detailed later plans must use earlier delivery evidence rather than assume proposals worked unchanged.
 
 ## Milestone 1 — Recording
 
-Deliver an independently launched Windows tray executable capturing the selected microphone and call playback endpoint after explicit consent acknowledgment and start. Include compact device/status controls, clear stop/finalization, preserved audio, bounded segments and visible failures/recovery.
+Deliver an independently launched tray executable for the latest Windows 11 x64 only, capturing the Windows-default microphone and application playback after explicit start. Playback uses endpoint-independent application loopback before listening-volume attenuation, excluding Scribe and its descendants, under [ADR 0008](../../engineering/decisions/0008-scribe-playback-before-listening-volume.md). Users change the default microphone in Windows before Start; no Scribe selector is needed. Consent is handled outside Scribe. Include output-folder settings, distinct tray icons, clear stop/finalization, separate microphone/playback MP3s and retained partial output. Failure requires manual restart into a new session; pause is optional.
 
 Acceptance: with Scout.Web stopped, capture both sides of a fictional call, stop and locate playable output, then manually import/play it in Web. No Web code changes or database access are required for the file handoff.
+
+Accepted implementation direction: .NET 10 Windows Forms, NAudio/WASAPI native-format capture and independent Windows Media Foundation conversion, producing separate microphone/playback mono MP3s at 256 kbps each for 60–90 minute interviews. See the [native/separate-output decision](../../engineering/decisions/0007-scribe-native-separate-capture.md), which supersedes the earlier mixed-file experiment. Crash-usable committed audio is mandatory; write continuously with five-second checkpoints for both files and measure remaining encoder/output tail and latency. Add best-effort exception-path tray cleanup without relying on it for audio survival. Whole-system crash/power-outage recovery is outside M1. A copyable framework-dependent build folder is sufficient; external tools/codecs are permitted when needed. See the [format/durability decision](../../engineering/decisions/0005-scribe-audio-durability.md) and its [successor](../../engineering/decisions/0006-scribe-default-devices-and-capture-stack.md).
 
 See the [M1 plan](milestones/MILESTONE_1_PLAN.md) for packages, artifact limits and verification.
 

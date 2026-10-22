@@ -4,7 +4,7 @@ Run commands from the repository root. See the [quick start](../../README.md#qui
 
 ## Stack and repository
 
-Scout uses ASP.NET Core, Blazor Interactive Server, EF Core and SQLite. There is one application project (`src/Scout.Web`) and one test project (`tests/Scout.Web.Tests`). Prefer concrete feature operations and short-lived EF contexts. There is no separate JavaScript frontend build.
+Scout.Web uses ASP.NET Core, Blazor Interactive Server, EF Core and SQLite, with tests in `tests/Scout.Web.Tests`. The independent Windows Forms capture experiment lives in `src/Scout.Scribe`, with focused tests in `tests/Scout.Scribe.Tests`. Scribe uses NAudio 3.3.0/Windows Media Foundation, .NET 10 and Windows x64. Prefer concrete Web feature operations and short-lived EF contexts. There is no separate JavaScript frontend build.
 
 The application targets .NET 10. [global.json](../../global.json) selects SDK **10.0.402**, allows later patches in that feature band and selects Microsoft Testing Platform. EF Core and the local `dotnet-ef` tool are pinned to **10.0.13**; test dependencies are **xunit.v3 4.0.2** and **Microsoft.AspNetCore.Mvc.Testing 10.0.13**. ASP.NET Core runtime selection follows the installed compatible framework; the application does not separately pin a runtime patch.
 
@@ -19,6 +19,8 @@ dotnet ef migrations has-pending-model-changes --project src/Scout.Web --startup
 ```
 
 If `dotnet test` reports a runner handshake failure/zero discovered tests in the Codex execution environment, run the built xUnit runner directly: `dotnet tests/Scout.Web.Tests/bin/Debug/net10.0/Scout.Web.Tests.dll`. This executes the full same suite. Temporary file-rename checks require filesystem access; sandbox-denied runs are not passing gates. M3's delivery record states the command actually used and its results.
+
+Scribe's direct runner is `dotnet tests/Scout.Scribe.Tests/bin/Debug/net10.0-windows/win-x64/Scout.Scribe.Tests.dll`. Its codec/crash tests use synthetic audio only and never open capture devices. Run the suite with the necessary filesystem/IPC permissions if the sandbox blocks temporary-file renames or test-runner pipes. See the [capture experiment guide](../cycles/scout-scribe-v1/milestones/MILESTONE_1_CAPTURE_EXPERIMENT.md) for launching the UI, synthetic crash commands and manual microphone/headset checks. The UI starts idle; recording is always explicit. Web can still build/run independently with its project path.
 
 Run the full .NET suite after each package. Native JavaScript reliability tests use installed Node without npm packages or a frontend build:
 
@@ -73,6 +75,6 @@ Samples also include employer questions, tags, partial/full fictional STAR exper
 
 Read the [technical guidance and constraints](../products/scout-web/TECHNICAL.md), [domain model](../products/scout-web/DOMAIN_MODEL.md), relevant [product requirements](../products/scout-web/PRODUCT.md), and [roadmap](../ROADMAP.md) before planning a slice. Specifications include future capabilities; inspect the actual implementation and preceding delivery summary before using them as evidence of current behavior.
 
-Record significant architecture, product-boundary or durable UX choices in the [Architecture Decision Records collection](decisions/README.md) using its numbered template. Link the relevant milestone; preserve accepted historical rationale and record material changes in a successor ADR. Routine implementation details do not need an ADR. Current priority is to finish Web v1 M6 before Scribe implementation or further Scribe planning; [ADR 0002](decisions/0002-web-v1-desktop-ux.md) records the 4K-first UX direction.
+Record significant architecture, product-boundary or durable UX choices in the [Architecture Decision Records collection](decisions/README.md) using its numbered template. Link the relevant milestone; preserve accepted historical rationale and record material changes in a successor ADR. Routine implementation details do not need an ADR. [ADR 0002](decisions/0002-web-v1-desktop-ux.md) records the earlier Web-first priority and 4K-first UX direction; Web M6 is delivered and Scribe M1 implementation is now underway.
 
 The [cycle index](../README.md#milestone-plans-and-delivery-records) links to plans and implementation evidence. Web M5 delivers recording/consent, private playback, immutable manual transcripts and safe basic Markdown using Markdig 1.3.2. Its [delivery summary](../cycles/scout-web-v1/milestones/MILESTONE_5_DELIVERY.md) records actual gates and verification limits. [Web v1 M6](../cycles/scout-web-v1/milestones/MILESTONE_6_DELIVERY.md) delivers the desktop UI overhaul. The independent [Scribe v1 cycle](../cycles/scout-scribe-v1/README.md) has its own M1 recording, M2 local transcription and M3 fact extraction/review. Read the [product-cycle decision](decisions/0001-product-development-cycles.md) for numbering and historical preservation rules.
