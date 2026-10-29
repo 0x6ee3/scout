@@ -1,0 +1,32 @@
+{
+  "name": "scribe-js",
+  "productName": "Scribe.js",
+  "version": "0.1.2",
+  "private": true,
+  "description": "An independent Electron experiment for Scout.Scribe's tray recording workflow",
+  "main": "app/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.cjs",
+    "test:desktop": "node scripts/desktop-smoke.cjs",
+    "check": "node scripts/check.cjs",
+    "synthetic": "node scripts/synthetic.cjs",
+    "package": "node scripts/package.cjs"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "dependencies": {
+    "ffmpeg-static": "5.3.0",
+    "koffi": "3.3.3"
+  },
+  "devDependencies": {
+    "@electron/packager": "20.3.0",
+    "electron": "45.0.0",
+    "playwright": "1.64.1"
+  },
+  "allowScripts": {
+    "ffmpeg-static@5.3.0": true,
+    "koffi@3.3.3": true
+  }
+}

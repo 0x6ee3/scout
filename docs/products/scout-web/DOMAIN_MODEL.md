@@ -6,7 +6,7 @@ Conceptual entities and relationships for companies, applications, interviews, d
 
 ## 1. Domain model
 
-The following entities are conceptual. Codex should refine their structure into a practical relational model rather than reproduce them mechanically.
+This is a conceptual overview, not an exhaustive schema reference. Web v1 implements the workflows in the [user guide](USER_GUIDE.md); actual entities and EF migrations define persistence. The [M3 delivery](../../cycles/scout-web-v1/milestones/MILESTONE_3_DELIVERY.md#delivered-behavior-and-architecture) records the narrower implemented preparation model: employer questions and STAR experiences, without an expected-question catalog, category/language model or question-to-experience graph.
 
 ### 1.1 Company
 
@@ -50,7 +50,8 @@ Suggested attributes:
 - Personal notes and assessment
 - Discovery date
 - Publication/closing date, if known
-- Status: discovered, interested, rejected by user, expired, archived
+- Opportunity status: discovered, interested, rejected by user, expired
+- Archived flag, independent of opportunity status
 
 A position may exist without an application.
 
@@ -162,7 +163,7 @@ Suggested metadata:
 - Description
 - Document category
 - Associated entity
-- Optional hash for duplicate detection
+- SHA-256 hash for integrity verification; imports are not automatically deduplicated
 
 Multiple attachments per entity are required.
 
@@ -206,15 +207,15 @@ Suggested attributes:
 - Interview notes
 - Prepared questions
 - Related professional experiences
-- Attachments, recordings, transcripts, analyses
+- Attachments, recordings and immutable transcript/correction records
+
+Generated analyses are outside Web v1; Scribe M3 plans separate reviewed extraction output.
 
 An application can contain multiple interview rounds.
 
 ### 1.10 Question library
 
-There are **two logically separate kinds of questions**.
-
-**A. Questions the user wants to ask employers**
+Web v1 implements a reusable catalog of **questions the user wants to ask employers**.
 
 Examples:
 
@@ -227,23 +228,9 @@ Examples:
 - Who makes technical decisions?
 - How is AI-assisted coding used?
 
-**B. Questions interviewers might ask the user**
-
-Examples:
-
-- Tell me about a conflict with a colleague.
-- Describe a situation where you mentored someone.
-- How did you handle an unsuccessful technical decision?
-- Tell me about a system you owned.
-- What would you do differently today?
-
-Suggested fields:
+Implemented catalog fields include:
 
 - Question text
-- Type: ask employer / prepare answer
-- Category
-- Language (German or English)
-- Suggested interview types
 - Intent / what to learn
 - Optional follow-up questions
 - Tags
@@ -253,6 +240,8 @@ Suggested fields:
 The same question should be reusable across companies and interviews.
 
 The answer given by a particular employer belongs to the specific interview/application, not to the global question definition.
+
+The original concept also proposed a separate expected-interviewer-question catalog and category/language fields. Those were excluded from the approved M3 scope. Rehearsal prompts belong to STAR experience text; there is no separate expected-question entity or language setting. Free-form German and English content is supported.
 
 ### 1.11 Professional experience library
 
@@ -267,24 +256,23 @@ Suggested fields:
 - Actions taken
 - Result
 - Reflection / lessons learned
-- Tags and categories
+- Tags
 - Optional longer notes
 
 Use STAR as a helpful structure, not a mandatory format for every example.
 
-A professional experience may be linked to multiple interview questions.
-
-For example, one technical conflict might be relevant to questions about leadership, disagreements, communication, autonomy, and lessons learned.
+An experience can be selected for multiple interview rounds, with round-specific rehearsal notes. Selections reference current library content. Likely prompts help rehearse topics such as leadership or disagreements; there is no question-to-experience association graph.
 
 ### 1.12 Interview question instance
 
-Connects a reusable question to a particular interview.
+Preserves a round-specific copy of a selected employer question; ad hoc questions can also be created directly in the round. Later library edits do not rewrite prepared copies, and deleting a reusable definition preserves its interview copies and answers.
 
 Suggested fields:
 
 - Interview round
-- Question
-- Intended or actual context
+- Optional source question reference
+- Copied wording, intent and follow-up prompts
+- Private preparation notes
 - Asked / not asked
 - Answer or notes
 - Follow-up required

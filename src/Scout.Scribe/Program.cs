@@ -33,7 +33,7 @@ internal static class Program
         }
         catch (Exception error)
         {
-            if (args.Length == 0) MessageBox.Show(error.ToString(), "Scribe experiment failed");
+            if (args.Length == 0) MessageBox.Show(error.ToString(), "Scout.Scribe could not continue");
             else Console.Error.WriteLine(error);
             return 1;
         }

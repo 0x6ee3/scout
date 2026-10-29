@@ -6,12 +6,12 @@ Technology decisions, transcription and AI processing, persistence, file safety,
 
 ## 1. Technology decisions
 
-### Proposed stack
+### Implemented Web stack
 
 | Area | Choice |
 |---|---|
 | Language | C# |
-| Runtime | Current supported .NET release |
+| Runtime | .NET 10; exact SDK and dependency pins in the development guide |
 | Backend | ASP.NET Core |
 | UI | Blazor Web App with server-side interactivity |
 | ORM | Entity Framework Core |
@@ -20,11 +20,11 @@ Technology decisions, transcription and AI processing, persistence, file safety,
 | Editor | VS Code |
 | Development agent | Codex |
 | Operating system | Windows 11 |
-| Audio recording | External tools today; independent Scout.Scribe tray executable planned in Scribe v1 M1 |
+| Audio recording | External tools, including the independent Scout.Scribe M1 capture experiment; full M1 acceptance pending |
 | Transcription | Optional local speech-to-text in Scout.Scribe, planned in Scribe v1 M2 |
 | AI analysis | Local fact extraction and review planned in Scribe v1 M3; no Web engine required |
 
-The exact supported .NET and package versions should be verified when implementation begins.
+See the [development guide](../../engineering/DEVELOPMENT.md#stack-and-repository) and project files for the current SDK and package pins.
 
 ### Why this stack?
 
@@ -34,14 +34,14 @@ ASP.NET Core and Blazor allow this to be implemented in a single C# ecosystem wi
 
 The recording subsystem does not determine the main application architecture because external audio capture and file import are acceptable.
 
-Razor Pages or ASP.NET Core with HTMX are also reasonable alternatives. Prefer whichever produces the simplest maintainable solution; do not combine multiple UI paradigms without a compelling reason.
+Web uses Blazor Interactive Server. Keep subsequent changes consistent with that implemented UI architecture.
 
 ### Deployment and execution
 
 - Run locally on Windows 11.
 - Bind the web server to localhost only.
 - Use one SQLite database initially.
-- Store files in a configured local directory.
+- Store files at the fixed per-user root described below.
 - Support launching Scout through `dotnet run` during development.
 - Desktop installers, Windows services, and automatic startup are not required.
 - No Docker or remote database.
@@ -51,14 +51,9 @@ Local-only does not mean security is irrelevant: validate file uploads and paths
 
 ### Configuration
 
-Configure at minimum:
+Web resolves its fixed root to `<user home>\Documents\Scout`, independently of the working directory. Database and asset locations are derived from that root; there is no user-configurable storage root or storage settings screen. Tests supply isolated roots. `Scout:Port` can select another loopback port; see [operations](OPERATIONS.md#running-the-local-server).
 
-- Database location.
-- Asset directory.
-- Optional audio import directory.
-- Future processing executable/model settings belong to Scout.Scribe, not Web's v1 configuration.
-
-Use configuration files or environment variables as appropriate. Do not embed API keys in source code, database records, or committed configuration.
+Future processing executable/model settings belong to Scout.Scribe, not Web's v1 configuration. Do not embed API keys in source code, database records, or committed configuration.
 
 ---
 
@@ -77,7 +72,7 @@ Accept:
 - Manually entered interview notes.
 - Imported plain-text transcript.
 - Imported audio recording.
-- Scout.Scribe output once Scribe M1 is implemented, or output from other recording tools.
+- Output from the Scout.Scribe capture experiment or other recording tools through the same manual imports.
 
 ### Stage B: Speech-to-text
 
@@ -161,21 +156,13 @@ Do not prematurely introduce multiple databases, event sourcing, or distributed 
 
 ### Assets
 
-Use a configured root directory, for example:
+The implemented fixed root is `<user home>\Documents\Scout`:
 
-`D:\ScoutData`
+- `database/scout.db`: SQLite database.
+- `assets/documents/<generated GUID>/original.<allowed extension>`: managed imported originals.
+- `recordings/`: working audio files eligible for explicit relative-path registration.
 
-A possible structure:
-
-- `database/`
-- `documents/`
-- `cvs/`
-- `audio/`
-- `transcripts/`
-- `imports/`
-- `exports/`
-
-The exact folder structure is an implementation detail.
+CVs and transcript originals use managed document storage. Back up the entire root, including SQLite sidecars and retained failed imports; see [operations](OPERATIONS.md#backup-upgrade-and-restore).
 
 ### Preservation requirements
 
@@ -191,7 +178,7 @@ The exact folder structure is an implementation detail.
 
 Consider simple database and asset backups, but no backup service is required initially.
 
-Use safe file-path handling and ensure imported filenames cannot escape the configured asset directory.
+Use safe file-path handling and ensure imported filenames cannot escape the managed asset directory.
 
 ---
 

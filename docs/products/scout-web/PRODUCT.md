@@ -4,7 +4,8 @@ Product vision, application features, Interview Workspace, recording workflows, 
 
 [Documentation overview](../../README.md). Section numbers are local to this document.
 
-**Status:** Initial specification, ready for implementation planning  
+**Status:** Web v1 M1–M6 implemented; physical-display acceptance remains open. See the [release baseline](../../cycles/scout-web-v1/RELEASE_SUMMARY.md) and [user guide](USER_GUIDE.md) for delivered behavior.
+
 **Target environment:** Windows 11, local-only, single user  
 **Primary goal:** Build a practical personal job-search and interview-management application.  
 **Development approach:** AI-assisted implementation with Codex, delivered incrementally.
@@ -132,10 +133,10 @@ Suggested panels:
 2. Submitted CV.
 3. Interview-round details.
 4. Questions to ask the employer.
-5. Expected questions and professional experiences.
+5. Professional experiences and rehearsal prompts.
 6. Notes.
 
-Milestone 4 provides the Workspace without audio setup or consent prompts. Recording status/controls, consent decisions, and audio import/linking are deferred to Milestone 5. Existing generic opaque audio attachments remain available without adding a recording workflow.
+M4 introduced the Workspace; M5 added private recording registration/playback and an optional approved recording-choice panel. Recordings, transcripts and consent history remain outside the shared Workspace. See the [user guide](USER_GUIDE.md#interview-workspace) for the implemented boundary.
 
 Start with a simple CSS grid layout. Drag-and-drop panel arrangement is optional and can be deferred.
 
@@ -177,7 +178,7 @@ Before an interview, the user selects questions from the reusable library.
 Within the Workspace:
 
 - Show selected questions.
-- Group or filter them by category.
+- Search and filter prepared entries by tags and interview state; there is no category model.
 - Mark questions as asked.
 - Record answers or quick notes.
 - Keep unanswered questions readily visible.
@@ -189,7 +190,7 @@ A question answered during an earlier round should retain that answer when refer
 
 ### 3.4 Expected questions and answer preparation
 
-The user can select expected questions and associate professional experiences.
+The user can select professional experiences and use their likely-prompt and STAR fields to prepare answers. Web v1 has no separate expected-question catalog or question-to-experience association graph; see the [M3 delivery scope](../../cycles/scout-web-v1/milestones/MILESTONE_3_DELIVERY.md#delivered-behavior-and-architecture).
 
 During the interview:
 
@@ -275,26 +276,28 @@ Optional local transcription is planned in Scout.Scribe v1 M2, followed by local
 
 Support importing common formats such as MP3, WAV, and M4A. Browser playback depends on the actual codec/container; an unsupported format must have useful feedback and a verified download option. M5 does not require conversion software.
 
-Allow an existing recording file to be linked from the configured working directory.
+Allow an existing recording file to be linked by a relative path beneath `<Scout root>/recordings/`.
 
 Scout should not claim to control external recording software unless an actual integration has been implemented.
 
 ### 4.3 Scout.Scribe desktop companion
 
-Scout.Scribe will be an independently launched Windows desktop application, primarily operated through the tray. Its [Scribe M1 plan](../../cycles/scout-scribe-v1/milestones/MILESTONE_1_PLAN.md) covers explicit consent-aware start/stop, microphone and playback-device selection, levels/status, reliable output and failure handling. Desktop/capture dependencies will be verified during implementation. Later Scribe milestones add local processing and review.
+Scout.Scribe is an independent Windows desktop capture experiment, primarily operated through the tray. Its [product specification](../scout-scribe/PRODUCT.md) and [Scribe M1 plan](../../cycles/scout-scribe-v1/milestones/MILESTONE_1_PLAN.md) distinguish implemented recording/tray/settings from remaining reliability and hardware acceptance. Consent is obtained outside Scribe; recording always starts explicitly. Later milestones plan local processing and review.
 
-Planned capabilities:
+Current .NET recording experiment:
 
-- Select microphone device.
-- Select playback device.
+- Resolve the Windows-default microphone on each Start, without an in-app selector.
+- Capture application playback across output devices before listening-volume attenuation, excluding Scribe's process tree.
 - Capture both sides of the call.
-- Export finalized mixed audio; separate tracks are optional.
-- Show input levels.
+- Export separate microphone and playback MP3s; no mixing or gain compensation.
+- Show recording state and diagnostics in the tray and recording panel, with separate persistent settings.
 - Start / stop recording.
 - Surface recording failures.
 - Manually import saved output into the interview round using existing Web controls.
 
 Scribe runs without Scout.Web and does not access its database. Scout.Web remains usable with Windows tools, Audacity or any compatible audio/transcript producer. Browser control is deferred. Scribe M2 will add optional local transcript export to the existing UTF-8 TXT import boundary. Scribe M3 produces a separate reviewed result; automatic structured Web updates require later integration design.
+
+The independent [Scribe.js Electron experiment](../../../src/Scribe.js/README.md) additionally supports a pinned microphone and combined output. Those experiment-specific choices do not change the .NET capture baseline.
 
 ### 4.4 iPhone interviews
 
@@ -344,9 +347,8 @@ The first useful release should support:
 ### Interview preparation
 
 - Maintain questions to ask employers.
-- Maintain expected interview questions.
-- Maintain professional experience/STAR examples.
-- Categorize and search entries.
+- Maintain professional experience/STAR examples, including likely prompts for rehearsal.
+- Tag and search entries; no separate expected-question catalog or category/language model is implemented.
 - Prepare a set of questions and experiences for an interview.
 
 ### Interview Workspace
@@ -363,7 +365,7 @@ The first useful release should support:
 
 - Explicit acknowledgment of externally obtained recording consent.
 - Continue with manual notes without requiring audio.
-- Import externally recorded audio or link a recording from the configured working directory.
+- Import externally recorded audio or register a relative path beneath `<Scout root>/recordings/`.
 - Preserve original files and handle unavailable sources and import failures.
 - Play saved recordings directly on private interview-round details, including after completion, using native media controls.
 - Import and privately review text transcripts, retaining originals and corrected copies.
@@ -405,7 +407,7 @@ Prioritize:
 
 Explicit save outcomes must reflect confirmed results. Field guidance stays near fields, failed edits retain drafts, and routine Workspace autosave must not repeatedly interrupt the interview with dialogs. Existing archive/unlink actions retain their meaning; no permanent file deletion is introduced. Dialogs and breadcrumbs in the Workspace must respect its approved projection.
 
-See the [M6 UX plan](../../cycles/scout-web-v1/milestones/MILESTONE_6_PLAN.md) and [ADR 0002](../../engineering/decisions/0002-web-v1-desktop-ux.md) for the planned composition, scope and acceptance checks. This direction is planned, not current UI behavior. Finish Web 1.0 before beginning Scribe implementation or expanding its plans.
+See the [M6 delivery](../../cycles/scout-web-v1/milestones/MILESTONE_6_DELIVERY.md) and [ADR 0003](../../engineering/decisions/0003-web-presentation-patterns.md) for the implemented composition and verification limits. Physical-display acceptance remains open; Scribe implementation is underway independently.
 
 The standard Scout interface may show sensitive personal information.
 

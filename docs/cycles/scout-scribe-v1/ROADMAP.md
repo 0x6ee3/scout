@@ -1,5 +1,7 @@
 # Scout.Scribe v1 — Roadmap
 
+Current-status update (29 October 2026): the capture experiment and tray/recording panel/persistent settings are implemented; [ADR 0009](../../engineering/decisions/0009-scribe-tray-recording-panel.md) adds opt-in sign-in startup. Hardware, interactive sign-in and remaining reliability acceptance are pending; M1 is not yet delivered. The dated milestone direction below is retained; follow the [current usage guide](../../../src/Scout.Scribe/README.md) for operation. The independent [Scribe.js experiment](../../../src/Scribe.js/README.md) has its own implementation and verification.
+
 Date: 16 October 2026; updated 21 October 2026. A separate product development cycle for recording, transcription and local fact extraction. M1 package 1 has an [implemented capture experiment](milestones/MILESTONE_1_CAPTURE_EXPERIMENT.md) with synthetic verification; hardware acceptance and remaining packages are pending. No milestone is delivered yet. Detailed later plans must use earlier delivery evidence rather than assume proposals worked unchanged.
 
 ## Milestone 1 — Recording

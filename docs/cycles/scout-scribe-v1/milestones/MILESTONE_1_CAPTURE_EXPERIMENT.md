@@ -1,5 +1,7 @@
 # Scribe M1 package 1 — Capture experiment
 
+Current-status note (29 October 2026): launch/window and non-persistent-settings instructions below describe the original package 1 experiment. [ADR 0009](../../../engineering/decisions/0009-scribe-tray-recording-panel.md) subsequently introduced quiet tray startup, a single-click recording panel, separate persistent settings and opt-in sign-in startup. Use the [current usage guide](../../../../src/Scout.Scribe/README.md) for operation. The original capture evidence and unperformed hardware checks remain historical evidence, not full M1 acceptance.
+
 Date: 22 October 2026. Status: separate-output experiment and tray shell implemented. Application-loopback playback volume independence is verified on LG/AMD hardware and decoded MP3s; broader hardware acceptance remains open. This is not M1 delivery. Saved settings, further reliability verification and delivery remain in the [M1 plan](MILESTONE_1_PLAN.md). [ADR 0008](../../../engineering/decisions/0008-scribe-playback-before-listening-volume.md) supersedes endpoint-only playback in the earlier native/separate-output experiment.
 
 ## Build and launch

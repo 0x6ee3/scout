@@ -8,6 +8,8 @@ Scout.Web uses ASP.NET Core, Blazor Interactive Server, EF Core and SQLite, with
 
 The application targets .NET 10. [global.json](../../global.json) selects SDK **10.0.402**, allows later patches in that feature band and selects Microsoft Testing Platform. EF Core and the local `dotnet-ef` tool are pinned to **10.0.13**; test dependencies are **xunit.v3 4.0.2** and **Microsoft.AspNetCore.Mvc.Testing 10.0.13**. ASP.NET Core runtime selection follows the installed compatible framework; the application does not separately pin a runtime patch.
 
+The independent [Scribe.js Electron experiment](../../src/Scribe.js/README.md) lives under `src/Scribe.js`, outside the .NET solution. It has its own npm lockfile, tray/windows, direct Windows audio bindings and portable packaging. Its [verification report](../../src/Scribe.js/VERIFICATION.md) records the JavaScript/native/desktop checks and remaining hardware acceptance. Run its development commands from `src/Scribe.js`.
+
 ## Build and verification
 
 First restore dependencies with `dotnet tool restore` and `dotnet restore Scout.slnx`. Restore requires NuGet access.

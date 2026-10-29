@@ -11,6 +11,20 @@ Scout runs on your computer, stores its data locally and supports one user. Core
 
 ## What you can do
 
+Screenshots use fictional companies, people and interview content.
+
+**Keep an application in context** — interviews, contacts, next actions, documents and timeline in one view.
+
+<img src="docs/images/application-overview.png" alt="Application overview for a fictional .NET developer role at Nordlicht Digital, showing interview rounds, contacts, next actions and timeline" width="900">
+
+**Prepare your interview questions** — edit wording, intent, follow-ups and private preparation notes.
+
+<img src="docs/images/interview-question-editor.png" alt="Interview question editor with a fictional question about architecture decisions and a follow-up about technical improvements" width="900">
+
+**Use the Interview Workspace during a call** — keep approved job details, questions, live answers, notes and STAR cues side by side.
+
+<img src="docs/images/interview-workspace.png" alt="Interview Workspace showing a fictional .NET developer interview with job details, prepared questions, live answers, conversation notes and a STAR experience" width="900">
+
 - Track companies, positions, applications, contacts, timelines and next actions.
 - Keep documents, prepared CV versions and records of the exact files submitted externally.
 - Prepare interviews with reusable employer questions and STAR experience examples.
@@ -20,7 +34,7 @@ Scout runs on your computer, stores its data locally and supports one user. Core
 
 For planned capabilities and implementation progress, see the [roadmap](docs/ROADMAP.md) and [milestone records](docs/README.md#milestone-plans-and-delivery-records).
 
-Scout.Web milestones 1–6 are implemented. The [Web 1.0 baseline](docs/cycles/scout-web-v1/RELEASE_SUMMARY.md) records the desktop redesign, checks and remaining physical-display acceptance. The independent [Scout.Scribe v1 cycle](docs/cycles/scout-scribe-v1/README.md) plans recording, local transcription, and local fact extraction and review. Scribe is not implemented and is not a Web release dependency. Rough future ideas live in the [feature wishlist](docs/FEATURE_WISHLIST.md).
+Scout.Web milestones 1–6 are implemented. The [Web 1.0 baseline](docs/cycles/scout-web-v1/RELEASE_SUMMARY.md) records the desktop redesign, checks and remaining physical-display acceptance. The independent [Scout.Scribe v1 cycle](docs/cycles/scout-scribe-v1/README.md) has an implemented recording experiment and tray/settings, with remaining M1 acceptance pending; transcription and fact extraction/review are planned for M2–M3. The independent [Scribe.js Electron experiment](src/Scribe.js/README.md) compares another recording implementation. Neither is a Web release dependency. Rough future ideas live in the [feature wishlist](docs/FEATURE_WISHLIST.md).
 
 ## Quick start
 
@@ -58,4 +72,4 @@ Scout listens on localhost. It has no login or at-rest encryption; software runn
 | Understand requirements and the domain | [Documentation overview](docs/README.md) |
 | Review planned work and delivery evidence | [Roadmap](docs/ROADMAP.md) and [milestone records](docs/README.md#milestone-plans-and-delivery-records) |
 
-Scout uses ASP.NET Core, Blazor Interactive Server, Entity Framework Core and SQLite. The repository has one application project and one test project, without a separate frontend build.
+Scout.Web uses ASP.NET Core, Blazor Interactive Server, Entity Framework Core and SQLite, without a separate frontend build. The .NET solution also contains Scout.Scribe and its tests; the Scribe.js Electron experiment has its own npm build outside that solution.

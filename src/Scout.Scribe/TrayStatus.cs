@@ -12,7 +12,7 @@ internal sealed class TrayStatus : IDisposable
         icon = new NotifyIcon { Icon = idle, Text = "Scout.Scribe — not recording",
             ContextMenuStrip = menu, Visible = visible };
     }
-    public event EventHandler? DoubleClick { add => icon.DoubleClick += value; remove => icon.DoubleClick -= value; }
+    public event MouseEventHandler? MouseClick { add => icon.MouseClick += value; remove => icon.MouseClick -= value; }
     public void SetRecording(bool active, string text)
     {
         icon.Icon = active ? recording : idle;

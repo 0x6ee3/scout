@@ -1,5 +1,7 @@
 # Web v1 M6 — Package 1 verification notes
 
+Current-status note (29 October 2026): these notes preserve package 1 prototype checks and their limits. Later packages and the Web v1 baseline are implemented; see [M6 delivery](../milestones/MILESTONE_6_DELIVERY.md) and the [release summary](../RELEASE_SUMMARY.md). Physical-display acceptance remains open. Statements below about outstanding packages describe the original review stage.
+
 Date: 16 October 2026. Scope: source inventory and isolated interactive design proposals, not production UI acceptance. Status: ready for user design review; no composition has been approved for rollout. See the [design brief](M6_DESIGN_REVIEW.md) and [inventory](M6_UX_INVENTORY.md).
 
 ## Environment and checks

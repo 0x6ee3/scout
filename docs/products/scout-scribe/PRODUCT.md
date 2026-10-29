@@ -1,6 +1,8 @@
 # Scout.Scribe — Product
 
-Status: recording experiment and initial tray/single-instance shell implemented; real-device acceptance, persistent settings and remaining M1 reliability work are pending. No transcription/extraction features are implemented. This living document describes direction; consult the [Scribe v1 cycle](../../cycles/scout-scribe-v1/README.md) for milestone scope and evidence.
+Status: recording experiment, quiet single-instance tray startup, compact recording panel and persistent settings are implemented. Real-device acceptance, Windows sign-in acceptance and remaining M1 reliability work are pending; M1 is not yet delivered. No transcription/extraction features are implemented. This living document describes the .NET product; consult the [Scribe v1 cycle](../../cycles/scout-scribe-v1/README.md) for milestone scope and evidence.
+
+The independent [Scribe.js Electron experiment](../../../src/Scribe.js/README.md) has its own runtime, settings and verification. Its pinned microphone and combined-output choices do not change the .NET baseline; see [ADRs 0010–0012](../../engineering/decisions/README.md).
 
 Scout.Scribe turns consented conversations into reviewable local material: recorded audio, transcripts and proposed facts. It targets the latest generally available Windows 11 release only, primarily through the tray with small settings dialogs and later processing review windows as needed. Older Windows versions are unsupported; a possible macOS application is separate. The name covers the complete workflow rather than capture alone.
 

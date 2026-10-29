@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Scribe.js</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="renderer.js" defer></script>
+</head>
+<body>
+  <main id="panel" hidden>
+    <header class="brand"><img src="../assets/app.png" width="32" height="32" alt=""><div><h1>Scribe<span>.js</span></h1><p>Your audio, kept local.</p></div><span class="experiment">EXPERIMENT</span></header>
+    <section class="recording" aria-label="Recording status">
+      <div class="status"><i id="status-dot"></i><span id="phase">Ready to record</span></div>
+      <div class="timer" id="elapsed" aria-label="Elapsed time">00:00:00</div>
+      <p id="description">Microphone and PC audio, together.</p>
+      <div class="tracks"><span><i class="track-dot"></i>Microphone</span><span><i class="track-dot"></i>Application audio</span></div>
+    </section>
+    <p id="panel-error" class="message error" role="alert" hidden></p>
+    <button id="record" class="primary"><span class="record-symbol" id="record-symbol"></span><span id="record-label">Start recording</span></button>
+    <footer class="panel-footer"><button id="folder" class="quiet">Folder <span aria-hidden="true">↗</span></button><div><button id="details" class="quiet">Details</button><button id="settings" class="quiet">Settings</button></div></footer>
+    <p id="test-banner" class="test-banner" hidden>Synthetic audio · no devices opened</p>
+  </main>
+
+  <main id="settings-view" hidden>
+    <header class="page-header"><p class="eyebrow">SCRIBE.JS</p><h1>Settings</h1><p>Make room for your next recording.</p></header>
+    <form id="settings-form">
+      <label for="recording-folder">Recording folder</label>
+      <div class="folder-input"><input id="recording-folder" type="text" required autocomplete="off" spellcheck="false"><button id="browse" type="button">Browse…</button></div>
+      <p class="help">New sessions are saved here. Existing recordings stay where they are.</p>
+      <div class="microphone-setting"><label for="microphone-device">Microphone</label><select id="microphone-device"><option value="">Windows default microphone</option></select><p class="help">Pin your camera to keep recording from it when Windows defaults change.</p></div>
+      <div class="setting-row"><div><label for="launch-login">Launch at Windows sign-in</label><p class="help">Start quietly in the tray, ready when you are.</p></div><input type="checkbox" id="launch-login" role="switch"></div>
+      <p class="help" id="settings-locked" hidden>Stop the recording before changing settings.</p>
+      <p id="settings-message" class="message" role="status" hidden></p>
+      <footer class="form-footer"><button type="button" id="cancel-settings">Cancel</button><button class="primary" id="save-settings" type="submit">Save settings</button></footer>
+    </form>
+  </main>
+
+  <main id="details-view" hidden>
+    <header class="page-header"><p class="eyebrow">SCRIBE.JS</p><h1>Recording details</h1><p id="details-summary">Ready to record</p></header>
+    <dl class="session-meta"><dt>Output</dt><dd id="session-directory">No session yet</dd><dt>Format</dt><dd>recording.mp3 + separate sources · mono · 48 kHz · 256 kbps</dd></dl>
+    <div class="log-heading"><h2>Session activity</h2><button id="details-folder" class="quiet">Open folder ↗</button></div>
+    <pre id="events" tabindex="0" aria-label="Session activity">Start a recording to see capture and checkpoint details.</pre>
+    <footer class="details-footer"><span id="version"></span><span>Local capture · no upload</span></footer>
+  </main>
+</body>
+</html>

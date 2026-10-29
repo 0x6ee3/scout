@@ -1,5 +1,7 @@
 # Scout.Web v1 — Roadmap
 
+Reading note (29 October 2026): the milestone descriptions below retain the original release goals and sequencing. Actual delivery narrowed M3 to employer questions and STAR experiences, without an expected-question catalog or question-to-experience graph; see [M3 delivery](milestones/MILESTONE_3_DELIVERY.md#delivered-behavior-and-architecture). Web M6 is implemented and Scribe M1 implementation is underway independently. Use the [portfolio roadmap](../../ROADMAP.md) for current priorities and the [user guide](../../products/scout-web/USER_GUIDE.md) for implemented behavior.
+
 Milestone goals, deliverables and acceptance criteria for Web 1.0. M1–M6 are implemented; [M6 delivery](milestones/MILESTONE_6_DELIVERY.md) and the [release baseline](RELEASE_SUMMARY.md) record actual checks and remaining physical-display acceptance. Detailed records are indexed in the [cycle overview](README.md). Scribe's milestones are independent and do not block Web 1.0.
 
 [Documentation overview](../../README.md). Section numbers are local to this document.

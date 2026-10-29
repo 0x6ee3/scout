@@ -1,5 +1,7 @@
 # 0006 — Scribe default devices and capture stack
 
+Current-status note (29 October 2026): the original decision-time status below is historical. The capture stack is implemented; [ADR 0007](0007-scribe-native-separate-capture.md) supersedes capture-format and mixed-output details, and [ADR 0008](0008-scribe-playback-before-listening-volume.md) supersedes endpoint-only playback. [ADR 0009](0009-scribe-tray-recording-panel.md) records implemented tray/settings refinements. Full M1 hardware and reliability acceptance remains pending; see the [current cycle](../../cycles/scout-scribe-v1/README.md).
+
 Date: 2026-10-21. Status: Accepted; not implemented. Scope: Scout.Scribe v1 M1. Partially supersedes [ADR 0004](0004-scribe-recording-baseline.md) on device selectors and dependency recommendations and [ADR 0005](0005-scribe-audio-durability.md) on encoder selection and checkpoint interval. Their other requirements remain applicable.
 
 ## Context
